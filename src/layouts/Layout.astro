@@ -1,0 +1,50 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Hulksar — Your life, in sync",
+  description = "Your personal lifestyle hub for nutrition, routines and everyday progress."
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <script is:inline>
+      try { document.documentElement.dataset.theme = localStorage.getItem("hulksar-theme") === "light" ? "light" : "dark"; }
+      catch { document.documentElement.dataset.theme = "dark"; }
+    </script>
+  </head>
+  <body>
+    <slot />
+    <script is:inline>
+      const themeButton = document.getElementById("theme-toggle");
+      const syncThemeButton = () => {
+        const light = document.documentElement.dataset.theme === "light";
+        if (!themeButton) return;
+        themeButton.setAttribute("aria-label", light ? "Switch to dark theme" : "Switch to light theme");
+        themeButton.setAttribute("title", light ? "Switch to dark theme" : "Switch to light theme");
+        themeButton.innerHTML = light ? '<span aria-hidden="true">☾</span><span>Dark</span>' : '<span aria-hidden="true">☀</span><span>Light</span>';
+      };
+      syncThemeButton();
+      themeButton?.addEventListener("click", () => {
+        const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem("hulksar-theme", next); } catch {}
+        syncThemeButton();
+      });
+    </script>
+  </body>
+</html>
