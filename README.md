@@ -15,7 +15,7 @@ This repository is an independent copy of TrackCake's current application. Exist
 ## Shared identity and data
 ProjectHulksar is intended to use the same Supabase project as TrackCake. When configured with the same Supabase project URL and public anon/publishable key, users sign in with the same account and both apps access the same user-owned records under the existing Row Level Security policies. There is no password migration or user duplication.
 
-Do not run the copied SQL migrations against the existing shared database again. They are retained for reference and fresh-environment setup only. Add both app domains to Supabase Auth's Site URL / Redirect URLs before enabling production email flows on the new domain.
+Do not run the copied SQL migrations against the existing shared database again. They are retained for reference and fresh-environment setup only. Keep TrackCake's current Supabase Auth Site URL unchanged, and add `https://projecthulksar.vercel.app/**` to the Auth Redirect URLs allowlist alongside TrackCake's existing redirect URLs. This is needed for email verification and password recovery links to return to the correct app.
 
 ## Local setup
 Requirements: Node.js 22 and npm.
