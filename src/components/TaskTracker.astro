@@ -1,0 +1,61 @@
+<section class="task-tracker-section" id="tasks" aria-labelledby="tasks-title">
+  <div class="task-section-heading">
+    <div>
+      <p class="card-kicker">YOUR DAILY MOMENTUM</p>
+      <h2 id="tasks-title">Daily tasks <span class="task-heading-spark">✳</span></h2>
+      <p>Small steps, tracked every day. Build a rhythm that works for you.</p>
+    </div>
+    <button class="task-analyse-button" id="task-analyse" type="button"><span aria-hidden="true">✧</span> Analyse progress</button>
+  </div>
+
+  <div class="task-summary-strip" aria-live="polite">
+    <div><span class="task-summary-icon">✓</span><span><strong id="task-summary-done">0 / 0</strong><small>Done today</small></span></div>
+    <div><span class="task-summary-icon">↗</span><span><strong id="task-summary-rate">—</strong><small>Today's progress</small></span></div>
+    <div><span class="task-summary-icon">◎</span><span><strong id="task-summary-streak">0 days</strong><small>Active streak</small></span></div>
+  </div>
+
+  <div class="task-workspace">
+    <article class="task-panel task-daily-panel">
+      <div class="task-panel-heading">
+        <div><p class="card-kicker">YOUR CHECKLIST</p><h3 id="task-selected-date">Today</h3><p id="task-day-caption">One day at a time.</p></div>
+        <button class="task-today-button" id="task-go-today" type="button">Today</button>
+      </div>
+      <div class="task-day-progress"><span id="task-day-progress-fill"></span></div>
+      <div class="task-list" id="task-list" aria-live="polite"><p class="task-empty">Loading your tasks…</p></div>
+      <form class="task-add-form" id="task-add-form">
+        <label class="sr-only" for="task-title-input">New daily task</label>
+        <input id="task-title-input" type="text" maxlength="100" placeholder="Add a daily task…" required />
+        <button type="submit" aria-label="Add task">＋</button>
+      </form>
+      <p class="task-footnote">Your daily check-ins are saved privately to your account.</p>
+    </article>
+
+    <article class="task-panel task-calendar-panel">
+      <div class="task-panel-heading task-calendar-heading">
+        <div><p class="card-kicker">YOUR HISTORY</p><h3 id="task-month-label">This month</h3></div>
+        <div class="task-month-controls">
+          <button id="task-month-prev" type="button" aria-label="Previous month">‹</button>
+          <button id="task-month-next" type="button" aria-label="Next month">›</button>
+        </div>
+      </div>
+      <div class="task-calendar-weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="task-calendar-grid" id="task-calendar-grid" aria-label="Monthly task completion calendar"></div>
+      <div class="task-calendar-legend"><span><i class="level-0"></i> No check-ins</span><span><i class="level-1"></i> Some done</span><span><i class="level-2"></i> All done</span></div>
+      <div class="task-month-summary" id="task-month-summary">Your monthly activity will appear here.</div>
+    </article>
+  </div>
+
+  <section class="task-analysis-panel" id="task-analysis-panel" hidden aria-labelledby="task-analysis-title">
+    <div class="task-analysis-heading"><div><p class="card-kicker">YOUR MONTH IN REVIEW</p><h3 id="task-analysis-title">Progress analysis</h3><p id="task-analysis-subtitle">A clear look at how consistently you showed up.</p></div><button id="task-analysis-close" type="button" aria-label="Close analysis">×</button></div>
+    <div class="task-analysis-stats" id="task-analysis-stats"></div>
+    <div class="task-analysis-details">
+      <div class="task-analysis-card"><h4>Task consistency</h4><div id="task-analysis-breakdown"></div></div>
+      <div class="task-analysis-card"><h4>Weekly progress</h4><div class="task-weekly-chart" id="task-weekly-chart"></div></div>
+    </div>
+    <p class="task-analysis-note" id="task-analysis-note"></p>
+  </section>
+  <p class="task-feedback" id="task-feedback" role="status" aria-live="polite"></p>
+</section>
+<script>
+  import "../scripts/tasks";
+</script>
