@@ -13,7 +13,6 @@ const formatDate = (key: string, options: Intl.DateTimeFormatOptions = { weekday
 const url = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
 const anon = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
 let supabase: SupabaseClient | null = null;
-let token = "";
 let tasks: Task[] = [];
 let logs: TaskLog[] = [];
 let month = monthKey(new Date());
