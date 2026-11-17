@@ -11,7 +11,7 @@ This repository is an independent application based on TrackCake's food diary ex
 - Food history editing and deletion.
 - Supabase Auth for email/password and anonymous sessions.
 - MongoDB Atlas for user-scoped application data.
-- Calkie assistant and configurable AI providers.
+- Hulkie assistant and configurable AI providers.
 - Dark red/black default theme with a saved light-theme toggle.
 
 ## Technology
@@ -26,7 +26,7 @@ This repository is an independent application based on TrackCake's food diary ex
 
 ## Database and account separation
 
-MongoDB Atlas is the primary database for Hulksar. Food entries, calorie goals and Calkie conversation history are stored in MongoDB documents scoped by the authenticated Supabase user ID.
+MongoDB Atlas is the primary database for Hulksar. Food entries, calorie goals and Hulkie conversation history are stored in MongoDB documents scoped by the authenticated Supabase user ID.
 
 Supabase is retained for authentication only. The browser sends its Supabase access token to Hulksar API routes; the server verifies the token and applies the verified user ID to every MongoDB query. The MongoDB URI and AI provider keys must never be exposed to browser code.
 
@@ -34,7 +34,7 @@ Supabase is retained for authentication only. The browser sends its Supabase acc
 
 On the first authenticated Hulksar tracker request, the API performs a one-time, read-only import of that user's existing food_entries and tracker_settings from the legacy shared Supabase PostgreSQL database into MongoDB. It records a per-user migration marker so the import is not repeated.
 
-The import does not update or delete any Supabase rows. TrackCake remains untouched. After import, new Hulksar food entries, goals and Calkie messages are stored in MongoDB and are not automatically synchronized back to TrackCake's PostgreSQL database.
+The import does not update or delete any Supabase rows. TrackCake remains untouched. After import, new Hulksar food entries, goals and Hulkie messages are stored in MongoDB and are not automatically synchronized back to TrackCake's PostgreSQL database.
 
 Keep the existing Supabase Auth project and add https://projecthulksar.vercel.app/** to its Auth Redirect URLs allowlist. Do not change the existing Auth Site URL if TrackCake still uses it.
 
@@ -79,7 +79,7 @@ MongoDB collections currently used:
 
 - food_entries: food details and nutrition values, with userId ownership.
 - tracker_settings: per-user calorie goal.
-- assistant_messages: per-user Calkie conversation history.
+- assistant_messages: per-user Hulkie conversation history.
 - migration_state: one-time legacy import markers.
 
 Indexes are created by the API on first use. Every user-owned query is filtered by the verified Supabase user ID.

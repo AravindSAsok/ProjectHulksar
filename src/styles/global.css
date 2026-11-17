@@ -2071,7 +2071,7 @@ a {
 .history-clear{height:38px;padding:0 13px;border:1px solid #e1e9dc;border-radius:9px;background:#eef4e9;color:#456343;font-size:11px;font-weight:700;white-space:nowrap}
 .history-clear:hover{background:#e3eddc}
 .history-note{margin-top:13px}
-/* Calkie personal assistant */
+/* Hulkie personal assistant */
 .calkie-launcher{position:fixed;right:25px;bottom:24px;z-index:50;display:flex;align-items:center;gap:10px;padding:9px 17px 9px 9px;border:1px solid #d9e6d2;border-radius:999px;background:#fff;box-shadow:0 12px 38px rgba(28,62,39,.18);color:#254a35;font-weight:700;font-size:13px;transition:transform .2s,box-shadow .2s}
 .calkie-launcher:hover{transform:translateY(-3px);box-shadow:0 16px 42px rgba(28,62,39,.22)}
 .calkie-launcher-face,.calkie-avatar{display:grid;place-items:center;flex:none;width:43px;height:43px;border-radius:15px;background:#edf4e7}
@@ -2135,7 +2135,7 @@ a {
 @media(max-width:620px){.daily-insights{grid-template-columns:1fr;gap:15px;padding:15px;margin:13px 0 22px}.meal-breakdown{padding:0 0 14px;border-right:0;border-bottom:1px solid #edf1ea}.weekly-consistency{padding:0}.meal-totals{gap:5px}.meal-total strong{font-size:11px}.insights-heading{margin-bottom:10px}}
 
 
-/* Device-adaptive polish: stable sizing, touch controls and a phone-native Calkie sheet. */
+/* Device-adaptive polish: stable sizing, touch controls and a phone-native Hulkie sheet. */
 html, body {
   width: 100%;
   max-width: 100%;
@@ -2195,7 +2195,7 @@ button, a, select, input, textarea { touch-action: manipulation; }
     font-size: 16px;
   }
 
-  /* Calkie becomes a true full-screen phone surface instead of a floating desktop card. */
+  /* Hulkie becomes a true full-screen phone surface instead of a floating desktop card. */
   .calkie-panel {
     position: fixed;
     inset: 0;
@@ -2372,7 +2372,7 @@ button, a, select, input, textarea { touch-action: manipulation; }
   .account-trigger { max-width: 112px; }
 }
 
-/* Calkie stays a dashboard overlay; the dashboard remains mounted and visible behind it. */
+/* Hulkie stays a dashboard overlay; the dashboard remains mounted and visible behind it. */
 body.calkie-open { overflow: hidden; }
 body.calkie-open::before {
   content: "";
@@ -2434,7 +2434,7 @@ body.calkie-open::before {
 @media(max-width:560px){.day-timeline-card{padding:16px 14px;margin-bottom:20px}.day-timeline-heading h2{font-size:16px}.day-timeline-heading{gap:8px}.day-timeline-total{font-size:9px;padding:7px 8px}.day-timeline-item{grid-template-columns:60px 29px minmax(0,1fr) auto;gap:7px;padding:11px 0}.day-timeline-time{font-size:10px}.day-timeline-icon{width:28px;height:28px}.day-timeline-food strong{font-size:11px}.day-timeline-food span{font-size:9px}.day-timeline-calories{font-size:10px}}
 
 
-/* Calkie bunny avatar */
+/* Hulkie bunny avatar */
 .calkie-launcher-face,.calkie-avatar{overflow:hidden;background:#ffe9ef;border:1px solid #f3cbd6;border-radius:15px}
 .calkie-launcher-face img,.calkie-avatar img{display:block;width:100%;height:100%;object-fit:cover}
 .calkie-launcher-face{width:48px;height:48px;border-radius:50%}
@@ -2446,7 +2446,7 @@ body.calkie-open::before {
 .review-item-heading{flex-wrap:wrap;}
 .review-source{flex-basis:100%;font-size:.72rem;line-height:1.4;color:#28734d;margin:2px 0 8px 2.4rem;}
 .review-source-estimate{color:#8a6a2f;}
-/* Keep Calkie's supplied artwork fully visible in both avatar sizes. */
+/* Keep Hulkie's supplied artwork fully visible in both avatar sizes. */
 .calkie-avatar img,.calkie-launcher-face img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;}
 .calkie-avatar,.calkie-launcher-face{overflow:hidden;}
 

@@ -37,7 +37,7 @@ function clearWelcome(): void {
 }
 
 async function getAccessToken(): Promise<string> {
-  if (!supabase) throw new Error("Calkie needs Supabase cloud sync. Configure your TrackCake account first.");
+  if (!supabase) throw new Error("Hulkie needs Supabase cloud sync. Configure your TrackCake account first.");
   let { data, error } = await supabase.auth.getSession();
   if (error) throw error;
   if (!data.session) {
@@ -45,7 +45,7 @@ async function getAccessToken(): Promise<string> {
     if (created.error) throw created.error;
     data = { session: created.data.session };
   }
-  if (!data.session?.access_token) throw new Error("Please sign in to use your private Calkie assistant.");
+  if (!data.session?.access_token) throw new Error("Please sign in to use your private Hulkie assistant.");
   return data.session.access_token;
 }
 
@@ -63,7 +63,7 @@ async function loadHistory(): Promise<void> {
     historyLoaded = true;
   } catch (error) {
     clearWelcome();
-    addBubble("error", error instanceof Error ? error.message : "Could not load Calkie's history.");
+    addBubble("error", error instanceof Error ? error.message : "Could not load Hulkie's history.");
   }
 }
 
@@ -104,7 +104,7 @@ async function sendMessage(message: string): Promise<void> {
   addBubble("user", message);
   const typing = document.createElement("div");
   typing.className = "calkie-typing";
-  typing.textContent = "Calkie is checking your diary…";
+  typing.textContent = "Hulkie is checking your diary…";
   messages.append(typing);
   messages.scrollTop = messages.scrollHeight;
   try {
@@ -120,7 +120,7 @@ async function sendMessage(message: string): Promise<void> {
       })
     });
     const payload = await response.json() as { answer?: string; error?: string; provider?: string; model?: string };
-    if (!response.ok) throw new Error(payload.error || "Calkie could not answer.");
+    if (!response.ok) throw new Error(payload.error || "Hulkie could not answer.");
     addBubble("assistant", payload.answer || "I couldn't find an answer in your diary.");
     const attribution = document.createElement("div");
     attribution.className = "calkie-typing";
@@ -138,7 +138,7 @@ async function sendMessage(message: string): Promise<void> {
   }
 }
 
-const setCalkieOpen = (open: boolean): void => {
+const setHulkieOpen = (open: boolean): void => {
   panel.hidden = !open;
   document.body.classList.toggle("calkie-open", open);
   launcher.setAttribute("aria-expanded", String(open));
@@ -148,13 +148,13 @@ const setCalkieOpen = (open: boolean): void => {
 launcher.setAttribute("aria-expanded", "false");
 launcher.addEventListener("click", () => {
   const opening = panel.hidden;
-  setCalkieOpen(opening);
+  setHulkieOpen(opening);
   // Do not summon the mobile keyboard merely by opening the assistant.
   if (opening && !window.matchMedia("(pointer: coarse)").matches) input.focus();
 });
-closeButton.addEventListener("click", () => setCalkieOpen(false));
+closeButton.addEventListener("click", () => setHulkieOpen(false));
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !panel.hidden) setCalkieOpen(false);
+  if (event.key === "Escape" && !panel.hidden) setHulkieOpen(false);
 });
 providerSelect.addEventListener("change", () => void loadModels());
 form.addEventListener("submit", (event) => {

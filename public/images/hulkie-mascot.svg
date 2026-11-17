@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+<title id="title">Hulkie red mascot</title><desc id="desc">An original friendly red fitness companion with dark tousled hair and a green shirt.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#fff0e9"/><stop offset="1" stop-color="#f9d8d0"/></linearGradient><linearGradient id="skin" x2=".8" y2="1"><stop stop-color="#ff665e"/><stop offset="1" stop-color="#c91f32"/></linearGradient><linearGradient id="shirt" x2="0" y2="1"><stop stop-color="#8dbb55"/><stop offset="1" stop-color="#3d783f"/></linearGradient></defs>
+<circle cx="160" cy="160" r="154" fill="url(#bg)"/><path d="M74 284c7-55 42-82 86-82s79 27 86 82" fill="url(#shirt)"/>
+<path d="M101 113c-8-29 4-65 30-78 5-20 29-25 43-11 22-10 47 4 48 29 22 17 22 47 7 65l-20-20-98 8z" fill="#24212a"/>
+<path d="M92 137c0-48 27-77 68-77s68 29 68 77c0 50-27 86-68 86s-68-36-68-86" fill="url(#skin)"/>
+<path d="M97 119c-2-30 15-61 40-68l-8 29 29-32 3 28 31-23-3 31 26-9 12 43-18-10-8-21-20 18-24-14-20 21-23-4-17 22z" fill="#24212a"/>
+<path d="M118 137c9-7 20-7 29 0M174 137c9-7 20-7 29 0" fill="none" stroke="#51232a" stroke-width="6" stroke-linecap="round"/>
+<ellipse cx="136" cy="151" rx="7" ry="9" fill="#25232a"/><ellipse cx="185" cy="151" rx="7" ry="9" fill="#25232a"/>
+<path d="M151 171c7 5 14 5 21 0" fill="none" stroke="#7d1727" stroke-width="5" stroke-linecap="round"/>
+<path d="M131 194c18 13 39 13 57 0" fill="none" stroke="#fff0e8" stroke-width="5" stroke-linecap="round"/>
+<path d="M111 221c16-13 33-18 49-18s33 5 49 18l-8 70H119z" fill="url(#shirt)"/>
+<path d="M160 224l18 17-18 19-18-19z" fill="#d9ef9b"/><path d="M160 232v17m-8-9h16" stroke="#3e773e" stroke-width="4" stroke-linecap="round"/>
+<path d="M66 208c-8-17-5-31 7-38 11-6 23 1 26 13l4 17-16 17z" fill="url(#skin)"/><path d="M253 204c11-16 24-19 34-9 9 10 5 24-5 32l-15 11-17-14z" fill="url(#skin)"/>
+<path d="M74 179l-9-10m22 9 7-13m171 30 14-9" stroke="#9f1d30" stroke-width="5" stroke-linecap="round"/>
+<circle cx="49" cy="83" r="9" fill="#8dbb55"/><circle cx="269" cy="103" r="7" fill="#8dbb55"/><path d="M42 247l8 8 8-8m200-142 8 8 8-8" fill="none" stroke="#8dbb55" stroke-width="5" stroke-linecap="round"/>
+</svg>
