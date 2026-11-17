@@ -1,3 +1,4 @@
+import { assertFreeOpenRouterModel } from "../../lib/openrouter-models";
 import type { APIRoute } from "astro";
 import { researchNutrition, type NutritionItem } from "../../lib/nutrition-research";
 
@@ -161,11 +162,10 @@ async function analyseImage(imageData: string, context: string, providerChoice: 
     attempts.push({ provider: "groq", model, run: () => callCompatibleVision("groq", keys.groq!, model, dataUrl, prompt) });
   }
   if (keys.openrouter) {
+    if (providerChoice === "openrouter" && modelChoice) await assertFreeOpenRouterModel(keys.openrouter, modelChoice);
     const models = [...new Set([
       providerChoice === "openrouter" ? modelChoice : undefined,
-      process.env.OPENROUTER_VISION_MODEL?.trim(),
-      "google/gemini-2.5-flash",
-      "qwen/qwen3-vl-8b-instruct"
+      "openrouter/free"
     ].filter((value): value is string => Boolean(value)))];
     for (const model of models) {
       attempts.push({ provider: "openrouter", model, run: () => callCompatibleVision("openrouter", keys.openrouter!, model, dataUrl, prompt) });
