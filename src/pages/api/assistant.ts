@@ -23,7 +23,6 @@ async function getUser(request: Request) {
   await Promise.all([
     db.collection("food_entries").createIndex({ userId: 1, eaten_at: -1 }),
     db.collection("assistant_messages").createIndex({ userId: 1, created_at: -1 }),
-    db.collection("migration_state").createIndex({ userId: 1, key: 1 }, { unique: true })
   ]);
   return { ...auth, db };
 }
@@ -143,32 +142,7 @@ function buildDiaryContext(rows: FoodRow[], timeZone: string) {
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    const { supabase, user, db } = await getUser(request);
-    const migrations = db.collection("migration_state");
-    const migrationKey = "supabase-assistant-history-v1";
-    if (!(await migrations.findOne({ userId: user.id, key: migrationKey }))) {
-      const { data, error } = await supabase.from("assistant_messages")
-        .select("id,role,content,created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-      const rows = data ?? [];
-      if (rows.length) {
-        await db.collection("assistant_messages").bulkWrite(rows.map((row) => ({
-          updateOne: {
-            filter: { userId: user.id, id: row.id },
-            update: { $setOnInsert: { ...row, userId: user.id } },
-            upsert: true
-          }
-        })), { ordered: false });
-      }
-      await migrations.updateOne(
-        { userId: user.id, key: migrationKey },
-        { $setOnInsert: { userId: user.id, key: migrationKey, completed_at: new Date().toISOString() } },
-        { upsert: true }
-      );
-    }
+    const { user, db } = await getUser(request);
     const messages = await db.collection("assistant_messages")
       .find({ userId: user.id }, { projection: { _id: 0, userId: 0 } })
       .sort({ created_at: -1 }).limit(30).toArray();
