@@ -1,5 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import TaskTracker from "../components/TaskTracker.astro";
 ---
 
 <Layout title="Hulksar — Your life, in sync">
@@ -21,6 +22,7 @@ import Layout from "../layouts/Layout.astro";
         <nav class="top-nav" aria-label="Main navigation">
           <a class="nav-link active" href="#overview">Home</a>
           <a class="nav-link" href="#diary">Nutrition</a>
+          <a class="nav-link" href="#tasks">Daily Tasks</a>
         </nav>
 
         <div class="top-actions">
@@ -127,6 +129,8 @@ import Layout from "../layouts/Layout.astro";
           <div class="macro-footnote"><span aria-hidden="true">ⓘ</span> Macro values are estimates and may be incomplete.</div>
         </article>
       </section>
+
+      <TaskTracker />
 
       <section class="daily-insights" aria-label="Today's meals and weekly consistency">
         <div class="meal-breakdown">
