@@ -1,5 +1,3 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
 type Task = { id: string; title: string; createdAt: string; archivedAt?: string | null };
 type TaskLog = { taskId: string; date: string; completed: boolean };
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -10,9 +8,6 @@ const esc = (value: string) => value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "
 const formatDate = (key: string, options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "long" }) =>
   new Intl.DateTimeFormat("en-IN", options).format(dateFromKey(key));
 
-const url = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
-const anon = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
-let supabase: SupabaseClient | null = null;
 let tasks: Task[] = [];
 let logs: TaskLog[] = [];
 let month = monthKey(new Date());
@@ -24,23 +19,16 @@ function feedback(message: string, error = false) {
   el.textContent = message;
   el.classList.toggle("is-error", error);
 }
-async function authToken(): Promise<string> {
-  if (!url || !anon) throw new Error("Connect Supabase Auth in your environment settings to use Daily Tasks.");
-  supabase ??= createClient(url, anon, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  let session = data.session;
-  if (!session) {
-    const signed = await supabase.auth.signInAnonymously();
-    if (signed.error) throw signed.error;
-    session = signed.data.session;
-  }
-  if (!session?.access_token) throw new Error("Your account session is not ready.");
-  return session.access_token;
-}
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const access = await authToken();
-  const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json", Authorization: "Bearer " + access, ...init.headers }, cache: "no-store" });
+  const sessionResponse = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+  const session = await sessionResponse.json().catch(() => ({})) as { user?: { id?: string } | null };
+  if (!sessionResponse.ok || !session.user?.id) throw new Error("Sign in to use Daily Tasks.");
+  const response = await fetch(path, {
+    ...init,
+    credentials: "same-origin",
+    headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
+    cache: "no-store"
+  });
   const body = await response.json().catch(() => ({})) as T & { error?: string };
   if (!response.ok) throw new Error(body.error || "Could not save your task.");
   return body;
