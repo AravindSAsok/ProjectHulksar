@@ -23,7 +23,7 @@ async function getUser(request: Request) {
   const db = await getMongoDb();
   await Promise.all([
     db.collection("food_entries").createIndex({ userId: 1, eaten_at: -1 }),
-    db.collection("assistant_messages").createIndex({ userId: 1, created_at: -1 }),
+    db.collection("assistant_messages").createIndex({ userId: 1, created_at: -1 }, { name: "user_assistant_history" }),
   ]);
   return { ...auth, db };
 }
