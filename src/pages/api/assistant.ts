@@ -1,3 +1,4 @@
+import { assertFreeOpenRouterModel } from "../../lib/openrouter-models";
 import type { APIRoute } from "astro";
 import { authenticateRequest } from "../../lib/server-auth";
 import { getMongoDb } from "../../lib/mongodb";
@@ -81,6 +82,7 @@ async function answerWithFallback(messages: ChatMessage[], providerChoice: Provi
   const groqKey = process.env.GROQ_API_KEY?.trim();
   const geminiKey = process.env.GEMINI_API_KEY?.trim();
   const routerKey = process.env.OPENROUTER_API_KEY?.trim();
+  if (providerChoice === "openrouter" && modelChoice && routerKey) await assertFreeOpenRouterModel(routerKey, modelChoice);
   const attempts: Array<{ provider: Provider; model: string; run: () => Promise<string> }> = [];
   if (groqKey) {
     const model = modelChoice || process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-20b";
@@ -91,7 +93,7 @@ async function answerWithFallback(messages: ChatMessage[], providerChoice: Provi
     attempts.push({ provider: "gemini", model, run: () => callGemini(geminiKey, model, messages) });
   }
   if (routerKey) {
-    const model = modelChoice || process.env.OPENROUTER_MODEL?.trim() || "baidu/ernie-5.5-flash-preview:free";
+    const model = modelChoice || "openrouter/free";
     attempts.push({ provider: "openrouter", model, run: () => callCompatible("openrouter", routerKey, model, messages) });
     if (!modelChoice && model !== "openrouter/free") {
       attempts.push({ provider: "openrouter", model: "openrouter/free", run: () => callCompatible("openrouter", routerKey, "openrouter/free", messages) });
