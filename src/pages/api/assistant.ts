@@ -43,7 +43,7 @@ async function callCompatible(provider: "groq" | "openrouter", key: string, mode
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`, "Content-Type": "application/json",
-      ...(provider === "openrouter" ? { "HTTP-Referer": "https://projecthulksar.vercel.app", "X-Title": "Project Hulksar Calkie" } : {})
+      ...(provider === "openrouter" ? { "HTTP-Referer": "https://projecthulksar.vercel.app", "X-Title": "Project Hulksar Hulkie" } : {})
     },
     body: JSON.stringify({ model, messages, temperature: 0.35, max_tokens: 1600 }),
     signal: AbortSignal.timeout(35_000)
@@ -104,12 +104,12 @@ async function answerWithFallback(messages: ChatMessage[], providerChoice: Provi
   for (const attempt of selected) {
     try {
       const content = await attempt.run();
-      console.info("[calkie] provider succeeded", { provider: attempt.provider, model: attempt.model });
+      console.info("[hulkie] provider succeeded", { provider: attempt.provider, model: attempt.model });
       return { content, provider: attempt.provider, model: attempt.model };
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Provider error";
       failures.push(`${attempt.provider}/${attempt.model}: ${reason.slice(0, 130)}`);
-      console.warn("[calkie] provider failed", { provider: attempt.provider, model: attempt.model, error: reason.slice(0, 160) });
+      console.warn("[hulkie] provider failed", { provider: attempt.provider, model: attempt.model, error: reason.slice(0, 160) });
     }
   }
   throw new Error(failures.join(" | ").slice(0, 700));
@@ -174,14 +174,14 @@ export const GET: APIRoute = async ({ request }) => {
       .sort({ created_at: -1 }).limit(30).toArray();
     return json({ messages: messages.reverse() });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Could not load Calkie history." }, 401);
+    return json({ error: error instanceof Error ? error.message : "Could not load Hulkie history." }, 401);
   }
 };
 
 export const POST: APIRoute = async ({ request }) => {
   let body: { message?: unknown; provider?: unknown; model?: unknown; timeZone?: unknown };
   try { body = await request.json(); }
-  catch { return json({ error: "Send a message for Calkie to answer." }, 400); }
+  catch { return json({ error: "Send a message for Hulkie to answer." }, 400); }
 
   const message = typeof body.message === "string" ? body.message.trim() : "";
   if (!message || message.length > 1500) return json({ error: "Please enter a question under 1,500 characters." }, 400);
@@ -223,7 +223,7 @@ export const POST: APIRoute = async ({ request }) => {
     }, 0);
     const remainingCalories = calorieGoal - consumedLast24h;
     const context = [
-      "You are Calkie, Hulksar's friendly, thoughtful personal food diary assistant.",
+      "You are Hulkie, Hulksar's friendly, thoughtful personal food diary assistant.",
       "Answer questions using ONLY the signed-in user's diary data below. Never invent meals, calories, dates, or nutrition values.",
       "The food diary is private to this one account. The user's local timezone is " + timeZone + ". Today's local date is " + today + ".",
       "Dates are local calendar dates. A day with no diary entries means no food was logged, not necessarily that the user ate nothing.",
@@ -258,7 +258,7 @@ export const POST: APIRoute = async ({ request }) => {
       daysAnalysed: daily.length
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Calkie could not answer right now.";
+    const message = error instanceof Error ? error.message : "Hulkie could not answer right now.";
     const status = /session|sign in|cloud sync/i.test(message) ? 401 : 502;
     return json({ error: message.slice(0, 900) }, status);
   }
