@@ -1,10 +1,10 @@
-# TrackCake Agent Guide
+# Hulksar Agent Guide
 
-This file is the working agreement for AI coding agents and human contributors maintaining TrackCake. Read it before making changes.
+This file is the working agreement for AI coding agents and human contributors maintaining Hulksar. Read it before making changes.
 
 ## 1. Product and priorities
 
-TrackCake is a lightweight, privacy-conscious food diary and calorie tracker. The product helps people record meals, review estimated nutrition, understand daily calorie and macro progress, and ask Calkie questions about their own diary.
+Hulksar is a lightweight, privacy-conscious food diary and calorie tracker. The product helps people record meals, review estimated nutrition, understand daily calorie and macro progress, and ask Calkie questions about their own diary.
 
 Priorities, in order:
 
@@ -20,7 +20,9 @@ Do not replace working behavior with mocks, fixtures, placeholders, or hard-code
 
 - Framework: Astro 5 with TypeScript.
 - Runtime/deployment: Vercel using the Astro Vercel adapter.
-- Browser persistence and cloud data: Supabase JS client, Supabase Auth, Postgres, and Row Level Security.
+- Identity: Supabase Auth via the Supabase JS client.
+- Application persistence: MongoDB Atlas via the official MongoDB Node.js driver, accessed only from server-side Astro API routes.
+- Server API routes verify the incoming Supabase bearer token with auth.getUser() and scope every MongoDB query by the verified userId.
 - AI providers: Groq, Gemini, and OpenRouter. Provider credentials must remain server-side.
 - Styling: shared stylesheet at `src/styles/global.css`.
 - Main dashboard markup: `src/pages/index.astro`.
@@ -38,10 +40,12 @@ Use the existing modules and storage abstractions. Do not introduce a second com
 ### Authentication and user data
 
 - Preserve Supabase email/password sign-up, sign-in, sign-out, session persistence, token refresh, and guest/anonymous behavior.
+- Supabase is used for authentication only. Never use Supabase Postgres as the active Hulksar application store.
+- Send the current Supabase access token as a Bearer token to protected Hulksar API routes. Verify it server-side before accessing MongoDB.
 - Never expose service-role keys or provider API keys in browser code, public environment variables, logs, or committed files.
-- Keep Row Level Security assumptions intact. Every user-owned database operation must remain scoped to the authenticated user.
+- Every MongoDB document containing user data must include userId. Every read, update and delete must include the verified userId in its MongoDB filter. Never trust a client-supplied user ID.
 - Do not change table names, columns, API payload shapes, or migration history unless the task explicitly requires it and the change is reviewed end-to-end.
-- Guest diary import must not overwrite another user's rows. Preserve the existing safe ID regeneration and insert behavior.
+- Guest/local diary import must not overwrite another user's rows. Use user-scoped IDs and idempotent insert-only operations.
 - Do not clear local or cloud data as a side effect of cosmetic UI changes.
 - Display the authenticated user's metadata name when present; otherwise derive a readable label from the email local-part. Keep the full email available in account details.
 
@@ -53,7 +57,8 @@ Preserve all of the following:
 - AI photo-based food estimates, progress updates, cancellation, and review-before-save.
 - Provider/model discovery and selection for Groq, Gemini, and OpenRouter.
 - Automatic provider fallback.
-- Local storage fallback and optional Supabase cloud synchronization.
+- Local storage fallback and MongoDB cloud synchronization.
+- One-time, read-only import of legacy Supabase PostgreSQL food entries and tracker settings into MongoDB. Never write to or delete legacy PostgreSQL rows.
 - Daily calorie goal, rolling 24-hour calorie balance, macro totals, meal breakdown, searchable/date-filtered history, and seven-day consistency summary.
 
 Nutrition values are estimates, not medical advice. Do not imply that estimates are exact.
@@ -142,12 +147,12 @@ Rules:
 
 ## 7. Database and migration safety
 
-- Read the current migration and RLS policies before proposing a schema change.
-- Prefer additive, backward-compatible migrations.
-- Never edit an already-applied migration to change production history; add a new migration instead.
-- Never run destructive SQL, truncate tables, drop columns, or weaken RLS as a shortcut.
-- Do not use the Supabase service-role key in the browser.
-- Verify user ownership and guest-to-account migration behavior whenever persistence code changes.
+- Keep MongoDB collection documents versionable and export-friendly. Add indexes for user-scoped queries and common sort/filter paths.
+- Never expose MONGODB_URI to browser code or prefix it with PUBLIC_.
+- Verify every MongoDB read/write/delete is scoped to the server-verified userId.
+- Preserve the one-time, read-only legacy Supabase import. Do not run or modify the copied SQL migrations against the shared Supabase project.
+- Do not store uploaded food images or base64 image payloads. Vision requests are processed transiently; persist only reviewed nutrition details.
+- Verify local fallback, queued insert retries, legacy import idempotency, and guest-to-account behavior whenever persistence code changes.
 
 ## 8. Verification checklist
 

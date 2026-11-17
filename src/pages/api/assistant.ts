@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
-import { createClient } from "@supabase/supabase-js";
+import { authenticateRequest } from "../../lib/server-auth";
+import { getMongoDb } from "../../lib/mongodb";
 
 export const prerender = false;
 export const maxDuration = 60;
@@ -16,23 +17,15 @@ const json = (body: Record<string, unknown>, status = 200) => new Response(JSON.
   headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
 });
 
-function getClient(request: Request) {
-  const url = process.env.PUBLIC_SUPABASE_URL?.trim();
-  const key = process.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
-  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
-  if (!url || !key || !token) throw new Error("Sign in or enable cloud sync before chatting with Calkie.");
-  const client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${token}` } }
-  });
-  return { client, token };
-}
-
 async function getUser(request: Request) {
-  const { client, token } = getClient(request);
-  const { data, error } = await client.auth.getUser(token);
-  if (error || !data.user) throw new Error("Your session expired. Please sign in again.");
-  return { client, user: data.user };
+  const auth = await authenticateRequest(request);
+  const db = await getMongoDb();
+  await Promise.all([
+    db.collection("food_entries").createIndex({ userId: 1, eaten_at: -1 }),
+    db.collection("assistant_messages").createIndex({ userId: 1, created_at: -1 }),
+    db.collection("migration_state").createIndex({ userId: 1, key: 1 }, { unique: true })
+  ]);
+  return { ...auth, db };
 }
 
 async function readError(response: Response): Promise<string> {
@@ -50,7 +43,7 @@ async function callCompatible(provider: "groq" | "openrouter", key: string, mode
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`, "Content-Type": "application/json",
-      ...(provider === "openrouter" ? { "HTTP-Referer": "https://trackcake.vercel.app", "X-Title": "TrackCake Calkie" } : {})
+      ...(provider === "openrouter" ? { "HTTP-Referer": "https://projecthulksar.vercel.app", "X-Title": "Project Hulksar Calkie" } : {})
     },
     body: JSON.stringify({ model, messages, temperature: 0.35, max_tokens: 1600 }),
     signal: AbortSignal.timeout(35_000)
@@ -150,14 +143,36 @@ function buildDiaryContext(rows: FoodRow[], timeZone: string) {
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    const { client, user } = await getUser(request);
-    const { data, error } = await client.from("assistant_messages")
-      .select("id,role,content,created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(30);
-    if (error) throw error;
-    return json({ messages: (data ?? []).reverse() });
+    const { supabase, user, db } = await getUser(request);
+    const migrations = db.collection("migration_state");
+    const migrationKey = "supabase-assistant-history-v1";
+    if (!(await migrations.findOne({ userId: user.id, key: migrationKey }))) {
+      const { data, error } = await supabase.from("assistant_messages")
+        .select("id,role,content,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      const rows = data ?? [];
+      if (rows.length) {
+        await db.collection("assistant_messages").bulkWrite(rows.map((row) => ({
+          updateOne: {
+            filter: { userId: user.id, id: row.id },
+            update: { $setOnInsert: { ...row, userId: user.id } },
+            upsert: true
+          }
+        })), { ordered: false });
+      }
+      await migrations.updateOne(
+        { userId: user.id, key: migrationKey },
+        { $setOnInsert: { userId: user.id, key: migrationKey, completed_at: new Date().toISOString() } },
+        { upsert: true }
+      );
+    }
+    const messages = await db.collection("assistant_messages")
+      .find({ userId: user.id }, { projection: { _id: 0, userId: 0 } })
+      .sort({ created_at: -1 }).limit(30).toArray();
+    return json({ messages: messages.reverse() });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Could not load Calkie history." }, 401);
   }
@@ -177,35 +192,25 @@ export const POST: APIRoute = async ({ request }) => {
   if (model && provider === "auto") return json({ error: "Choose a provider before selecting a model." }, 400);
 
   try {
-    const { client, user } = await getUser(request);
+    const { user, db } = await getUser(request);
     const timeZoneRaw = typeof body.timeZone === "string" ? body.timeZone : "UTC";
     let timeZone = "UTC";
     try { new Intl.DateTimeFormat("en", { timeZone: timeZoneRaw }); timeZone = timeZoneRaw; } catch { /* keep UTC */ }
 
-    const [foodResult, historyResult, settingsResult] = await Promise.all([
-      client.from("food_entries")
-        .select("name,amount,calories,protein_g,carbs_g,fat_g,meal_type,eaten_at,source")
-        .eq("user_id", user.id)
-        .order("eaten_at", { ascending: true })
-        .limit(5000),
-      client.from("assistant_messages")
-        .select("role,content")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10),
-      client.from("tracker_settings")
-        .select("calorie_goal")
-        .eq("user_id", user.id)
-        .maybeSingle()
+    const [foodRows, historyRows, settings] = await Promise.all([
+      db.collection("food_entries").find({ userId: user.id }, {
+        projection: { _id: 0, name: 1, amount: 1, calories: 1, protein_g: 1, carbs_g: 1, fat_g: 1, meal_type: 1, eaten_at: 1, source: 1 }
+      }).sort({ eaten_at: 1 }).limit(5000).toArray(),
+      db.collection("assistant_messages").find({ userId: user.id }, {
+        projection: { _id: 0, role: 1, content: 1 }
+      }).sort({ created_at: -1 }).limit(10).toArray(),
+      db.collection("tracker_settings").findOne({ userId: user.id })
     ]);
-    if (foodResult.error) throw foodResult.error;
-    if (historyResult.error) throw historyResult.error;
-    if (settingsResult.error) throw settingsResult.error;
-    const rows = (foodResult.data ?? []) as FoodRow[];
-    const history = (historyResult.data ?? []).reverse() as ChatMessage[];
+    const rows = foodRows as FoodRow[];
+    const history = historyRows.reverse() as ChatMessage[];
     const daily = buildDiaryContext(rows, timeZone);
     const today = dayKey(new Date().toISOString(), timeZone);
-    const configuredGoal = Number(settingsResult.data?.calorie_goal);
+    const configuredGoal = Number(settings?.calorie_goal);
     const calorieGoal = Number.isInteger(configuredGoal) && configuredGoal >= 500 && configuredGoal <= 10000
       ? configuredGoal
       : 2000;
@@ -218,7 +223,7 @@ export const POST: APIRoute = async ({ request }) => {
     }, 0);
     const remainingCalories = calorieGoal - consumedLast24h;
     const context = [
-      "You are Calkie, TrackCake's friendly, thoughtful personal food diary assistant.",
+      "You are Calkie, Hulksar's friendly, thoughtful personal food diary assistant.",
       "Answer questions using ONLY the signed-in user's diary data below. Never invent meals, calories, dates, or nutrition values.",
       "The food diary is private to this one account. The user's local timezone is " + timeZone + ". Today's local date is " + today + ".",
       "Dates are local calendar dates. A day with no diary entries means no food was logged, not necessarily that the user ate nothing.",
@@ -240,11 +245,11 @@ export const POST: APIRoute = async ({ request }) => {
       { role: "user", content: message }
     ];
     const result = await answerWithFallback(messages, provider as Provider | "auto", model);
-    const saved = await client.from("assistant_messages").insert([
-      { user_id: user.id, role: "user", content: message },
-      { user_id: user.id, role: "assistant", content: result.content }
+    const createdAt = new Date().toISOString();
+    await db.collection("assistant_messages").insertMany([
+      { id: crypto.randomUUID(), userId: user.id, role: "user", content: message, created_at: createdAt },
+      { id: crypto.randomUUID(), userId: user.id, role: "assistant", content: result.content, created_at: createdAt }
     ]);
-    if (saved.error) throw saved.error;
     return json({
       answer: result.content,
       provider: result.provider,

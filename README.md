@@ -1,23 +1,51 @@
-# ProjectHulksar
+# Project Hulksar
 
 **Your life, in sync.** A personal lifestyle hub, starting with nutrition and designed to grow into routines, wellbeing, activity and everyday life tracking.
 
-This repository is an independent copy of TrackCake's current application. Existing food diary, AI-assisted food estimates, calorie and macro tracking, editable history, and Calkie assistant are retained as the first lifestyle module.
+This repository is an independent application based on TrackCake's food diary experience. Hulksar keeps the existing nutrition UI and AI workflows while using MongoDB Atlas as its primary application database.
 
 ## Current foundation
-- Manual, text-assisted and photo-assisted food logging
-- Calorie goals, macro summaries, meal breakdowns and history search
-- Food history edit/delete actions through a compact row menu
-- Supabase Auth and user-scoped PostgreSQL persistence
-- Calkie assistant and configurable AI providers
-- Dark red/black default theme with a saved light-theme toggle
 
-## Shared identity and data
-ProjectHulksar is intended to use the same Supabase project as TrackCake. When configured with the same Supabase project URL and public anon/publishable key, users sign in with the same account and both apps access the same user-owned records under the existing Row Level Security policies. There is no password migration or user duplication.
+- Manual, text-assisted and photo-assisted food logging.
+- Calorie goals, macro summaries, meal breakdowns and searchable food history.
+- Food history editing and deletion.
+- Supabase Auth for email/password and anonymous sessions.
+- MongoDB Atlas for user-scoped application data.
+- Calkie assistant and configurable AI providers.
+- Dark red/black default theme with a saved light-theme toggle.
 
-Do not run the copied SQL migrations against the existing shared database again. They are retained for reference and fresh-environment setup only. Keep TrackCake's current Supabase Auth Site URL unchanged, and add `https://projecthulksar.vercel.app/**` to the Auth Redirect URLs allowlist alongside TrackCake's existing redirect URLs. This is needed for email verification and password recovery links to return to the correct app.
+## Technology
+
+- Astro 5 + TypeScript.
+- Astro API routes running on the server.
+- MongoDB Atlas using the official MongoDB Node.js driver.
+- Supabase Auth for identity only.
+- Groq, Gemini and OpenRouter for AI features.
+- Open Food Facts and USDA FoodData Central for nutrition research.
+- Vercel for hosting.
+
+## Database and account separation
+
+MongoDB Atlas is the primary database for Hulksar. Food entries, calorie goals and Calkie conversation history are stored in MongoDB documents scoped by the authenticated Supabase user ID.
+
+Supabase is retained for authentication only. The browser sends its Supabase access token to Hulksar API routes; the server verifies the token and applies the verified user ID to every MongoDB query. The MongoDB URI and AI provider keys must never be exposed to browser code.
+
+### Existing TrackCake data
+
+On the first authenticated Hulksar tracker request, the API performs a one-time, read-only import of that user's existing food_entries and tracker_settings from the legacy shared Supabase PostgreSQL database into MongoDB. It records a per-user migration marker so the import is not repeated.
+
+The import does not update or delete any Supabase rows. TrackCake remains untouched. After import, new Hulksar food entries, goals and Calkie messages are stored in MongoDB and are not automatically synchronized back to TrackCake's PostgreSQL database.
+
+Keep the existing Supabase Auth project and add https://projecthulksar.vercel.app/** to its Auth Redirect URLs allowlist. Do not change the existing Auth Site URL if TrackCake still uses it.
+
+The supabase/migrations directory is retained as historical reference for the legacy PostgreSQL schema. **Do not run those SQL migrations again** against the shared Supabase project.
+
+## Image privacy
+
+Food photos are processed in memory by the server-side vision endpoint and sent to the selected AI provider. Hulksar does not upload them to permanent file storage or save image bytes/base64 data in MongoDB. Only the returned nutrition details are eligible to be saved as a food entry. Avoid logging image payloads, and review each AI provider's own request-retention policy.
 
 ## Local setup
+
 Requirements: Node.js 22 and npm.
 
 ```bash
@@ -29,13 +57,40 @@ npm run dev
 Open http://localhost:4321.
 
 ## Environment
-Add your keys later in Vercel and your local .env file. The names are documented in `.env.example`. Never commit real API keys or a Supabase service-role key. The browser only receives the Supabase URL and public anon/publishable key; RLS remains the security boundary.
+
+Add these values to your local .env and Vercel project settings:
+
+| Variable | Purpose |
+|---|---|
+| MONGODB_URI | MongoDB Atlas connection string (server-only) |
+| MONGODB_DB_NAME | Database name; defaults to hulksar |
+| PUBLIC_SUPABASE_URL | Supabase Auth project URL |
+| PUBLIC_SUPABASE_ANON_KEY | Supabase public anon/publishable key |
+| GEMINI_API_KEY | Optional Gemini AI provider |
+| GROQ_API_KEY | Optional Groq AI provider |
+| OPENROUTER_API_KEY | Optional OpenRouter AI provider |
+| USDA_FDC_API_KEY | Optional USDA nutrition lookup key |
+
+Add model overrides only when needed; the names are listed in .env.example. Never commit real API keys, MongoDB connection strings, or service-role keys. MongoDB and AI credentials must not use a PUBLIC_ prefix.
+
+## Data model
+
+MongoDB collections currently used:
+
+- food_entries: food details and nutrition values, with userId ownership.
+- tracker_settings: per-user calorie goal.
+- assistant_messages: per-user Calkie conversation history.
+- migration_state: one-time legacy import markers.
+
+Indexes are created by the API on first use. Every user-owned query is filtered by the verified Supabase user ID.
 
 ## Build and checks
+
 ```bash
 npm run check
 npm run build
 ```
 
 ## Original project
-The starting point is [AravindSAsok/tracKcake](https://github.com/AravindSAsok/tracKcake). ProjectHulksar is maintained independently; future lifestyle modules should be added here without changing TrackCake.
+
+The starting point is [AravindSAsok/tracKcake](https://github.com/AravindSAsok/tracKcake). Project Hulksar is maintained independently; future lifestyle modules should be added here without changing TrackCake.

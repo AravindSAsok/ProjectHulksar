@@ -30,8 +30,8 @@ async function probe(
         : {
             "Authorization": `Bearer ${key}`,
             ...(provider === "openrouter" ? {
-              "HTTP-Referer": "https://trackcake.vercel.app",
-              "X-Title": "TrackCake"
+              "HTTP-Referer": "https://projecthulksar.vercel.app",
+              "X-Title": "Project Hulksar"
             } : {})
           },
       signal: AbortSignal.timeout(7_000)
