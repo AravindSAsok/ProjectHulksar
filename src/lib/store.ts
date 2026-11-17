@@ -1,5 +1,3 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 export type EntrySource = "ai" | "manual";
 export type StorageMode = "local" | "cloud";
@@ -16,10 +14,6 @@ const PENDING_KEY = "hulksar.pending-entries.v1";
 const LEGACY_ENTRIES_KEY = "trackcake.entries.v1";
 const LEGACY_GOAL_KEY = "trackcake.goal.v1";
 const DEFAULT_GOAL = 2000;
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
-const cloudConfigured = Boolean(supabaseUrl && supabaseAnonKey);
-let supabase: SupabaseClient | null = null;
 let storageMode: StorageMode = "local";
 
 function readLocalEntries(): FoodEntry[] {
@@ -73,24 +67,17 @@ function queuePending(userId: string, entry: FoodEntry) {
 function removePending(userId: string, id: string) {
   updatePending(userId, readPending(userId).map((item) => item.id).filter((item) => item !== id));
 }
-async function getCloudContext(): Promise<{ client: SupabaseClient; userId: string; token: string } | null> {
-  if (!cloudConfigured || !supabaseUrl || !supabaseAnonKey) return null;
-  supabase ??= createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  let session = data.session;
-  if (!session) {
-    const result = await supabase.auth.signInAnonymously();
-    if (result.error) throw result.error;
-    session = result.data.session;
-  }
-  if (!session?.user.id || !session.access_token) throw new Error("Your sign-in session is not ready.");
-  return { client: supabase, userId: session.user.id, token: session.access_token };
+async function getCloudContext(): Promise<{ userId: string } | null> {
+  const response = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+  if (!response.ok) throw new Error("Could not check your sign-in session.");
+  const payload = await response.json() as { user?: { id?: string } | null };
+  return payload.user?.id ? { userId: payload.user.id } : null;
 }
-async function apiRequest<T>(context: { token: string }, path: string, init: RequestInit = {}): Promise<T> {
+async function apiRequest<T>(_context: { userId: string }, path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
     ...init,
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + context.token, ...init.headers },
+    credentials: "same-origin",
+    headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
     cache: "no-store"
   });
   const payload = await response.json().catch(() => ({})) as T & { error?: string };
@@ -111,7 +98,6 @@ function localHistory(options: { page: number; pageSize: number; start?: string;
 export async function loadTrackerData(): Promise<TrackerData> {
   const localEntries = readLocalEntries();
   const localGoal = readLocalGoal();
-  if (!cloudConfigured) { storageMode = "local"; return { entries: localEntries, goal: localGoal, mode: "local" }; }
   try {
     const context = await getCloudContext();
     if (!context) return { entries: localEntries, goal: localGoal, mode: "local" };
@@ -164,7 +150,6 @@ export async function addEntry(entry: FoodEntry): Promise<string | undefined> {
   const existing = readLocalEntries();
   if (existing.some((item) => item.id === entry.id)) throw new Error("This food entry already exists. Hulksar did not overwrite it.");
   writeLocal([entry, ...existing]);
-  if (!cloudConfigured) return;
   try {
     const context = await getCloudContext(); if (!context) return;
     await apiRequest(context, "/api/tracker", { method: "POST", body: JSON.stringify({ entry }) });
