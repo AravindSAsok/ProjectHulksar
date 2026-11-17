@@ -41,7 +41,7 @@ export const GET: APIRoute = async ({ request }) => {
     const endDate = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 1));
     const end = endDate.toISOString().slice(0, 10);
     const [tasks, logs] = await Promise.all([
-      db.collection("daily_tasks").find({ userId, createdAt: { $lt: end + "T23:59:59.999Z" } }, { projection: { _id: 0, userId: 0 } }).sort({ createdAt: 1 }).toArray(),
+      db.collection("daily_tasks").find({ userId, createdAt: { $lt: end + "T00:00:00.000Z" } }, { projection: { _id: 0, userId: 0 } }).sort({ createdAt: 1 }).toArray(),
       db.collection("daily_task_logs").find({ userId, date: { $gte: start, $lt: end } }, { projection: { _id: 0, userId: 0 } }).toArray()
     ]);
     return json({ tasks, logs });
