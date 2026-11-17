@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace "com.aravindsasok.trackcake"
+    namespace "com.aravindsasok.hulksar"
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.aravindsasok.trackcake"
+        applicationId "com.aravindsasok.hulksar"
         minSdk 21
         targetSdk 36
         versionCode 1

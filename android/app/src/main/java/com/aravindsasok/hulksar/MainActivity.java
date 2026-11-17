@@ -1,4 +1,4 @@
-package com.aravindsasok.trackcake;
+package com.aravindsasok.hulksar;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -9,7 +9,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 public final class MainActivity extends Activity {
-    private static final String APP_URL = "https://trackcake.vercel.app";
+    private static final String APP_URL = "https://projecthulksar.vercel.app";
     private WebView webView;
 
     @Override

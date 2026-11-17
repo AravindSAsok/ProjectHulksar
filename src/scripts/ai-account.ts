@@ -185,7 +185,7 @@ if (accountTrigger && accountDialog && accountForm && accountFields && accountSt
       const settingPassword = mode === "set-password";
       accountSubmit.textContent = recovery ? "Send reset link" : settingPassword ? "Save new password" : mode === "signup" ? "Create free account" : "Sign in";
       accountModeToggle.hidden = settingPassword;
-      accountModeToggle.textContent = recovery ? "Back to sign in" : mode === "signup" ? "Already have an account? Sign in" : "New to Trackcake? Create account";
+      accountModeToggle.textContent = recovery ? "Back to sign in" : mode === "signup" ? "Already have an account? Sign in" : "New to Hulksar? Create account";
       if (accountForgot) accountForgot.hidden = mode !== "signin";
       if (accountEmailLabel) accountEmailLabel.hidden = settingPassword;
       accountEmail.required = !settingPassword;
@@ -208,9 +208,9 @@ if (accountTrigger && accountDialog && accountForm && accountFields && accountSt
       accountStatus.textContent = recovery
         ? "No stress. Enter your email and we’ll send a secure password reset link."
         : settingPassword
-          ? "Choose a new password for your TrackCake account. Use at least 8 characters."
+          ? "Choose a new password for your Hulksar account. Use at least 8 characters."
           : mode === "signup"
-            ? "Create your free TrackCake account to keep your food diary in sync across devices."
+            ? "Create your free Hulksar account to keep your food diary in sync across devices."
             : "Welcome back. Sign in to see your meals, calorie goals and food history.";
     };
 

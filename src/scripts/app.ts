@@ -547,7 +547,7 @@ function photoProgressDialog(): HTMLDialogElement {
   dialog.innerHTML = `
     <div class="dialog-form photo-progress-content">
       <div class="photo-progress-orb" aria-hidden="true"><span>✳</span></div>
-      <p class="card-kicker">TRACKCAKE PHOTO ANALYSIS</p>
+      <p class="card-kicker">HULKSAR PHOTO ANALYSIS</p>
       <h2 id="photo-progress-title">Reading your plate</h2>
       <p class="dialog-subtitle" id="photo-progress-message" aria-live="polite">Preparing your photo…</p>
       <div class="photo-progress-track"><span id="photo-progress-fill"></span></div>

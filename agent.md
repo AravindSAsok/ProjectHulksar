@@ -4,7 +4,7 @@ This file is the working agreement for AI coding agents and human contributors m
 
 ## 1. Product and priorities
 
-Hulksar is a lightweight, privacy-conscious food diary and calorie tracker. The product helps people record meals, review estimated nutrition, understand daily calorie and macro progress, and ask Calkie questions about their own diary.
+Hulksar is a lightweight, privacy-conscious food diary and calorie tracker. The product helps people record meals, review estimated nutrition, understand daily calorie and macro progress, and ask Hulkie questions about their own diary.
 
 Priorities, in order:
 
@@ -28,7 +28,7 @@ Do not replace working behavior with mocks, fixtures, placeholders, or hard-code
 - Main dashboard markup: `src/pages/index.astro`.
 - Main diary and food-entry interactions: `src/scripts/app.ts`.
 - Account and food-estimation model selector behavior: `src/scripts/ai-account.ts`.
-- Calkie popup and chat client: `src/scripts/calkie.ts`.
+- Hulkie popup and chat client: `src/scripts/hulkie.ts`.
 - Shared document shell: `src/layouts/Layout.astro`.
 - Server endpoints: `src/pages/api/`.
 - Supabase migrations and database policy source: `supabase/migrations/`.
@@ -63,10 +63,10 @@ Preserve all of the following:
 
 Nutrition values are estimates, not medical advice. Do not imply that estimates are exact.
 
-### Calkie
+### Hulkie
 
-- Calkie is a floating popup/chat widget on the dashboard, never a separate page or route.
-- Opening or closing Calkie must not navigate, reload, or replace the dashboard.
+- Hulkie is a floating popup/chat widget on the dashboard, never a separate page or route.
+- Opening or closing Hulkie must not navigate, reload, or replace the dashboard.
 - Preserve chat history, suggestions, provider/model selection, authenticated API requests, and message submission.
 - Keep the dashboard mounted underneath the mobile overlay.
 - Do not automatically open the mobile keyboard when the popup is opened.
@@ -171,7 +171,7 @@ For account changes:
 - [ ] Full email is visible in account details, including long addresses.
 - [ ] Sign-up, sign-in, verification resend, sign-out, and session restoration remain intact.
 
-For Calkie changes:
+For Hulkie changes:
 - [ ] Opens and closes without route changes or page reload.
 - [ ] Dashboard remains mounted underneath the overlay.
 - [ ] History loads and remains visible after closing/reopening.

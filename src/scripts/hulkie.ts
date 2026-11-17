@@ -5,16 +5,16 @@ type ProviderStatus = { provider: string; configured: boolean; ok: boolean; mode
 type ChatMessage = { id?: string; role: "user" | "assistant"; content: string; created_at?: string };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const launcher = $("calkie-launcher") as HTMLButtonElement;
-const panel = $("calkie-panel");
-const closeButton = $("calkie-close") as HTMLButtonElement;
-const form = $("calkie-form") as HTMLFormElement;
-const input = $("calkie-input") as HTMLTextAreaElement;
-const sendButton = $("calkie-send") as HTMLButtonElement;
-const messages = $("calkie-messages");
-const providerSelect = $("calkie-provider") as HTMLSelectElement;
-const modelSelect = $("calkie-model") as HTMLSelectElement;
-const suggestions = $("calkie-suggestions");
+const launcher = $("hulkie-launcher") as HTMLButtonElement;
+const panel = $("hulkie-panel");
+const closeButton = $("hulkie-close") as HTMLButtonElement;
+const form = $("hulkie-form") as HTMLFormElement;
+const input = $("hulkie-input") as HTMLTextAreaElement;
+const sendButton = $("hulkie-send") as HTMLButtonElement;
+const messages = $("hulkie-messages");
+const providerSelect = $("hulkie-provider") as HTMLSelectElement;
+const modelSelect = $("hulkie-model") as HTMLSelectElement;
+const suggestions = $("hulkie-suggestions");
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, {
@@ -26,18 +26,18 @@ let sending = false;
 
 function addBubble(role: "user" | "assistant" | "error", content: string): void {
   const bubble = document.createElement("div");
-  bubble.className = "calkie-message " + role;
+  bubble.className = "hulkie-message " + role;
   bubble.textContent = content;
   messages.append(bubble);
   messages.scrollTop = messages.scrollHeight;
 }
 
 function clearWelcome(): void {
-  messages.querySelector(".calkie-welcome")?.remove();
+  messages.querySelector(".hulkie-welcome")?.remove();
 }
 
 async function getAccessToken(): Promise<string> {
-  if (!supabase) throw new Error("Hulkie needs Supabase cloud sync. Configure your TrackCake account first.");
+  if (!supabase) throw new Error("Hulkie needs Supabase cloud sync. Configure your Hulksar account first.");
   let { data, error } = await supabase.auth.getSession();
   if (error) throw error;
   if (!data.session) {
@@ -103,7 +103,7 @@ async function sendMessage(message: string): Promise<void> {
   clearWelcome();
   addBubble("user", message);
   const typing = document.createElement("div");
-  typing.className = "calkie-typing";
+  typing.className = "hulkie-typing";
   typing.textContent = "Hulkie is checking your diary…";
   messages.append(typing);
   messages.scrollTop = messages.scrollHeight;
@@ -123,7 +123,7 @@ async function sendMessage(message: string): Promise<void> {
     if (!response.ok) throw new Error(payload.error || "Hulkie could not answer.");
     addBubble("assistant", payload.answer || "I couldn't find an answer in your diary.");
     const attribution = document.createElement("div");
-    attribution.className = "calkie-typing";
+    attribution.className = "hulkie-typing";
     attribution.textContent = "Answered with " + payload.provider + " · " + payload.model;
     messages.append(attribution);
   } catch (error) {
@@ -140,7 +140,7 @@ async function sendMessage(message: string): Promise<void> {
 
 const setHulkieOpen = (open: boolean): void => {
   panel.hidden = !open;
-  document.body.classList.toggle("calkie-open", open);
+  document.body.classList.toggle("hulkie-open", open);
   launcher.setAttribute("aria-expanded", String(open));
   if (open) void loadHistory();
 };

@@ -13,7 +13,7 @@ import TaskTracker from "../components/TaskTracker.astro";
               <path d="M18 3.5c7.4 0 13.4 6 13.4 13.4S25.4 30.3 18 30.3 4.6 24.3 4.6 16.9 10.6 3.5 18 3.5Z" fill="currentColor" opacity=".16"/>
               <path d="M18 5.8c6.2 0 11.2 5 11.2 11.2S24.2 28.2 18 28.2 6.8 23.2 6.8 17 11.8 5.8 18 5.8Z" stroke="currentColor" stroke-width="1.8"/>
               <path d="M18 6v22M7.2 17h21.6M10.4 9.4l15.2 15.2M25.6 9.4 10.4 24.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <path d="M17.8 5.7c-.4-2 1-3.8 3.6-4.2" stroke="#91B96A" stroke-width="2" stroke-linecap="round"/>
+              <path d="M17.8 5.7c-.4-2 1-3.8 3.6-4.2" stroke="#b96a77" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </span>
           <span class="brand-name hulksar-brand">HULK<span>SAR</span></span>
@@ -297,7 +297,7 @@ import TaskTracker from "../components/TaskTracker.astro";
 
       <footer class="page-footer">
         <span>Made for a little more mindful eating <span aria-hidden="true">♡</span></span>
-        <span>trackcake <span class="footer-version">· nutrition estimates are not medical advice</span></span>
+        <span>Hulksar <span class="footer-version">· nutrition estimates are not medical advice</span></span>
       </footer>
     </main>
   </div>
@@ -422,36 +422,36 @@ import TaskTracker from "../components/TaskTracker.astro";
   </dialog>
 
   
-  <button class="calkie-launcher" id="calkie-launcher" type="button" aria-label="Chat with Hulkie">
-    <span class="calkie-launcher-face" aria-hidden="true">
+  <button class="hulkie-launcher" id="hulkie-launcher" type="button" aria-label="Chat with Hulkie">
+    <span class="hulkie-launcher-face" aria-hidden="true">
       <img src="/images/hulkie-mascot.svg?v=1" alt="" width="48" height="48" loading="eager" />
-    </span><span class="calkie-launcher-label">Ask Hulkie</span>
+    </span><span class="hulkie-launcher-label">Ask Hulkie</span>
   </button>
-  <section class="calkie-panel" id="calkie-panel" aria-label="Hulkie personal food assistant" hidden>
-    <header class="calkie-header">
-      <div class="calkie-avatar" aria-hidden="true"><img src="/images/hulkie-mascot.svg?v=1" alt="" width="48" height="48" loading="eager" /></div>
-      <div class="calkie-heading"><strong>Hulkie</strong><span>Your personal food buddy · private to you</span></div>
-      <button id="calkie-close" class="calkie-close" type="button" aria-label="Close Hulkie">×</button>
+  <section class="hulkie-panel" id="hulkie-panel" aria-label="Hulkie personal food assistant" hidden>
+    <header class="hulkie-header">
+      <div class="hulkie-avatar" aria-hidden="true"><img src="/images/hulkie-mascot.svg?v=1" alt="" width="48" height="48" loading="eager" /></div>
+      <div class="hulkie-heading"><strong>Hulkie</strong><span>Your personal food buddy · private to you</span></div>
+      <button id="hulkie-close" class="hulkie-close" type="button" aria-label="Close Hulkie">×</button>
     </header>
-    <div class="calkie-model-row">
-      <label>AI brain<select id="calkie-provider"><option value="auto">Automatic · best available</option><option value="groq">Groq</option><option value="gemini">Gemini</option><option value="openrouter">OpenRouter</option></select></label>
-      <label>Model<select id="calkie-model" disabled><option value="">Automatic fallback</option></select></label>
+    <div class="hulkie-model-row">
+      <label>AI brain<select id="hulkie-provider"><option value="auto">Automatic · best available</option><option value="groq">Groq</option><option value="gemini">Gemini</option><option value="openrouter">OpenRouter</option></select></label>
+      <label>Model<select id="hulkie-model" disabled><option value="">Automatic fallback</option></select></label>
     </div>
-    <div class="calkie-messages" id="calkie-messages" role="log" aria-live="polite">
-      <div class="calkie-welcome"><span class="calkie-wave">✳</span><strong>Hey! I'm Hulkie.</strong><p>I know your food diary. Ask me about meals, calories, macros or your eating patterns.</p></div>
+    <div class="hulkie-messages" id="hulkie-messages" role="log" aria-live="polite">
+      <div class="hulkie-welcome"><span class="hulkie-wave">✳</span><strong>Hey! I'm Hulkie.</strong><p>I know your food diary. Ask me about meals, calories, macros or your eating patterns.</p></div>
     </div>
-    <div class="calkie-suggestions" id="calkie-suggestions">
+    <div class="hulkie-suggestions" id="hulkie-suggestions">
       <button type="button" data-prompt="How am I doing against my daily calorie goal?">My calorie goal</button>
       <button type="button" data-prompt="What did I eat yesterday?">Yesterday's food</button>
       <button type="button" data-prompt="How many calories did I eat last week?">Last week's calories</button>
       <button type="button" data-prompt="Which day did I eat the most calories?">My highest day</button>
     </div>
-    <form class="calkie-compose" id="calkie-form">
-      <label class="sr-only" for="calkie-input">Ask Hulkie about your food diary</label>
-      <textarea id="calkie-input" rows="1" maxlength="1500" placeholder="Ask anything about your food…" required></textarea>
-      <button id="calkie-send" type="submit" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 8-16 8 3-8-3-8Zm3 8h13" /></svg></button>
+    <form class="hulkie-compose" id="hulkie-form">
+      <label class="sr-only" for="hulkie-input">Ask Hulkie about your food diary</label>
+      <textarea id="hulkie-input" rows="1" maxlength="1500" placeholder="Ask anything about your food…" required></textarea>
+      <button id="hulkie-send" type="submit" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 8-16 8 3-8-3-8Zm3 8h13" /></svg></button>
     </form>
-    <p class="calkie-privacy">Hulkie only sees the food diary linked to your signed-in account.</p>
+    <p class="hulkie-privacy">Hulkie only sees the food diary linked to your signed-in account.</p>
   </section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
@@ -467,16 +467,16 @@ import TaskTracker from "../components/TaskTracker.astro";
   style.textContent = `
     #day-timeline-list .day-timeline-actions { display: none !important; }
     #day-timeline-list .day-timeline-item { cursor: pointer; border-radius: 10px; transition: background .15s ease; }
-    #day-timeline-list .day-timeline-item:hover { background: #f8faf6; }
-    #day-timeline-list .day-timeline-item:focus-visible { outline: 2px solid #78966d; outline-offset: 2px; }
-    .food-row-menu { width: min(340px, calc(100vw - 32px)); border: 1px solid #e3eadf; border-radius: 18px; padding: 20px; color: #263d2d; box-shadow: 0 22px 70px rgba(24,48,32,.24); }
+    #day-timeline-list .day-timeline-item:hover { background: #faf6f7; }
+    #day-timeline-list .day-timeline-item:focus-visible { outline: 2px solid #966d74; outline-offset: 2px; }
+    .food-row-menu { width: min(340px, calc(100vw - 32px)); border: 1px solid #eadfe1; border-radius: 18px; padding: 20px; color: #3d262a; box-shadow: 0 22px 70px rgba(24,48,32,.24); }
     .food-row-menu::backdrop { background: rgba(20,37,27,.42); backdrop-filter: blur(3px); }
     .food-row-menu h3 { margin: 0 0 5px; font: 800 18px Manrope, sans-serif; overflow-wrap: anywhere; }
-    .food-row-menu p { margin: 0 0 18px; color: #829080; font-size: 11px; }
+    .food-row-menu p { margin: 0 0 18px; color: #908083; font-size: 11px; }
     .food-row-menu-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-    .food-row-menu-actions button { min-height: 43px; border: 1px solid #dce7d8; border-radius: 11px; background: #f5f8f2; color: #355b3d; font: 750 12px Manrope, sans-serif; cursor: pointer; }
+    .food-row-menu-actions button { min-height: 43px; border: 1px solid #e7d8db; border-radius: 11px; background: #f8f2f3; color: #5b353b; font: 750 12px Manrope, sans-serif; cursor: pointer; }
     .food-row-menu-actions .food-row-menu-delete { border-color: #f0dada; background: #fff7f5; color: #a44740; }
-    .food-row-menu-close { display: block; width: 100%; margin-top: 9px; border: 0 !important; background: transparent !important; color: #7d897b !important; }
+    .food-row-menu-close { display: block; width: 100%; margin-top: 9px; border: 0 !important; background: transparent !important; color: #897b7d !important; }
   `;
   document.head.append(style);
 
