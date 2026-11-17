@@ -1,5 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-
 type ProviderModel = { id: string; name: string };
 type ProviderStatus = { provider: string; configured: boolean; ok: boolean; modelCount: number; models?: ProviderModel[] };
 type ChatMessage = { id?: string; role: "user" | "assistant"; content: string; created_at?: string };
@@ -15,12 +13,6 @@ const messages = $("hulkie-messages");
 const providerSelect = $("hulkie-provider") as HTMLSelectElement;
 const modelSelect = $("hulkie-model") as HTMLSelectElement;
 const suggestions = $("hulkie-suggestions");
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
-const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-}) : null;
-
 let historyLoaded = false;
 let sending = false;
 
@@ -36,24 +28,10 @@ function clearWelcome(): void {
   messages.querySelector(".hulkie-welcome")?.remove();
 }
 
-async function getAccessToken(): Promise<string> {
-  if (!supabase) throw new Error("Hulkie needs Supabase cloud sync. Configure your Hulksar account first.");
-  let { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  if (!data.session) {
-    const created = await supabase.auth.signInAnonymously();
-    if (created.error) throw created.error;
-    data = { session: created.data.session };
-  }
-  if (!data.session?.access_token) throw new Error("Please sign in to use your private Hulkie assistant.");
-  return data.session.access_token;
-}
-
 async function loadHistory(): Promise<void> {
   if (historyLoaded) return;
   try {
-    const token = await getAccessToken();
-    const response = await fetch("/api/assistant", { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
+    const response = await fetch("/api/assistant", { credentials: "same-origin", cache: "no-store" });
     const payload = await response.json() as { messages?: ChatMessage[]; error?: string };
     if (!response.ok) throw new Error(payload.error || "Could not load your chat history.");
     if (payload.messages?.length) {
@@ -108,10 +86,10 @@ async function sendMessage(message: string): Promise<void> {
   messages.append(typing);
   messages.scrollTop = messages.scrollHeight;
   try {
-    const token = await getAccessToken();
     const response = await fetch("/api/assistant", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
         provider: providerSelect.value || "auto",
