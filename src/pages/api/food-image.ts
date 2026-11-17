@@ -110,8 +110,8 @@ async function callCompatibleVision(
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
       ...(provider === "openrouter" ? {
-        "HTTP-Referer": "https://trackcake.vercel.app",
-        "X-Title": "TrackCake Food Photo"
+        "HTTP-Referer": "https://projecthulksar.vercel.app",
+        "X-Title": "Project Hulksar Food Photo"
       } : {})
     },
     body: JSON.stringify({

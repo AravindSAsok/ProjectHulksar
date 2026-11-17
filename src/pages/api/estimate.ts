@@ -104,8 +104,8 @@ async function callOpenAICompatible(
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       ...(provider === "openrouter" ? {
-        "HTTP-Referer": "https://trackcake.vercel.app",
-        "X-Title": "TrackCake"
+        "HTTP-Referer": "https://projecthulksar.vercel.app",
+        "X-Title": "Project Hulksar"
       } : {})
     },
     body: JSON.stringify({

@@ -15,7 +15,7 @@ export type NutritionItem = {
 
 type Quantity = { value: number; unit: "g" | "ml" };
 
-const OFF_AGENT = "TrackCake/1.0 (food nutrition verification)";
+const OFF_AGENT = "ProjectHulksar/1.0 (food nutrition verification)";
 const USDA_BASE = "https://api.nal.usda.gov/fdc/v1/foods/search";
 
 function normalise(value: unknown): string {

@@ -95,7 +95,7 @@ if (providerSelect && modelSelect) {
   void loadModels();
 }
 
-const PRODUCTION_AUTH_REDIRECT = "https://trackcake.vercel.app/";
+const PRODUCTION_AUTH_REDIRECT = "https://projecthulksar.vercel.app/";
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();

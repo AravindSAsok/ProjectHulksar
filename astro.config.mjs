@@ -4,7 +4,7 @@ import node from "@astrojs/node";
 
 // Keep Vercel as the default production adapter. Render opts into the
 // standalone Node adapter with TRACKCAKE_HOST=render at build time.
-const adapter = process.env.TRACKCAKE_HOST === "render"
+const adapter = (process.env.HULKSAR_HOST === "render" || process.env.TRACKCAKE_HOST === "render")
   ? node({ mode: "standalone" })
   : vercel();
 
