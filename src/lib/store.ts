@@ -161,7 +161,6 @@ export async function addEntry(entry: FoodEntry): Promise<string | undefined> {
 }
 export async function updateEntry(entry: FoodEntry): Promise<string | undefined> {
   writeLocal(readLocalEntries().map((item) => item.id === entry.id ? entry : item));
-  if (!cloudConfigured) return;
   try {
     const context = await getCloudContext(); if (!context) return;
     await apiRequest(context, "/api/tracker", { method: "PATCH", body: JSON.stringify({ entry }) });
@@ -172,7 +171,6 @@ export async function updateEntry(entry: FoodEntry): Promise<string | undefined>
 }
 export async function deleteEntry(id: string): Promise<string | undefined> {
   writeLocal(readLocalEntries().filter((item) => item.id !== id));
-  if (!cloudConfigured) return;
   try {
     const context = await getCloudContext(); if (!context) return;
     await apiRequest(context, "/api/tracker?id=" + encodeURIComponent(id), { method: "DELETE" });
@@ -184,7 +182,6 @@ export async function deleteEntry(id: string): Promise<string | undefined> {
 export async function saveGoal(goal: number): Promise<string | undefined> {
   if (!Number.isInteger(goal) || goal < 500 || goal > 10000) throw new Error("Choose a daily goal between 500 and 10,000 kcal.");
   writeLocal(readLocalEntries(), goal);
-  if (!cloudConfigured) return;
   try {
     const context = await getCloudContext(); if (!context) return;
     await apiRequest(context, "/api/tracker", { method: "PATCH", body: JSON.stringify({ goal }) });
