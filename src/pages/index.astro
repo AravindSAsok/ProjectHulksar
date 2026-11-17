@@ -428,10 +428,10 @@ import TaskTracker from "../components/TaskTracker.astro";
       <img src="/images/hulkie-mascot.svg?v=1" alt="" width="48" height="48" loading="eager" />
     </span><span class="hulkie-launcher-label">Ask Hulkie</span>
   </button>
-  <section class="hulkie-panel" id="hulkie-panel" aria-label="Hulkie personal food assistant" hidden>
+  <section class="hulkie-panel" id="hulkie-panel" aria-label="Hulkie personal assistant" hidden>
     <header class="hulkie-header">
       <div class="hulkie-avatar" aria-hidden="true"><img src="/images/hulkie-mascot.svg?v=1" alt="" width="48" height="48" loading="eager" /></div>
-      <div class="hulkie-heading"><strong>Hulkie</strong><span>Your personal food buddy · private to you</span></div>
+      <div class="hulkie-heading"><strong>Hulkie</strong><span>Your personal wellness & productivity assistant · private to you</span></div>
       <button id="hulkie-close" class="hulkie-close" type="button" aria-label="Close Hulkie">×</button>
     </header>
     <div class="hulkie-model-row">
@@ -439,20 +439,21 @@ import TaskTracker from "../components/TaskTracker.astro";
       <label>Model<select id="hulkie-model" disabled><option value="">Automatic fallback</option></select></label>
     </div>
     <div class="hulkie-messages" id="hulkie-messages" role="log" aria-live="polite">
-      <div class="hulkie-welcome"><span class="hulkie-wave">✳</span><strong>Hey! I'm Hulkie.</strong><p>I know your food diary. Ask me about meals, calories, macros or your eating patterns.</p></div>
+      <div class="hulkie-welcome"><span class="hulkie-wave">✳</span><strong>Hey! I'm Hulkie.</strong><p>I know your Hulksar activity. Ask me about food, tasks, habits, progress or what you could improve.</p></div>
     </div>
     <div class="hulkie-suggestions" id="hulkie-suggestions">
       <button type="button" data-prompt="How am I doing against my daily calorie goal?">My calorie goal</button>
       <button type="button" data-prompt="What did I eat yesterday?">Yesterday's food</button>
       <button type="button" data-prompt="How many calories did I eat last week?">Last week's calories</button>
       <button type="button" data-prompt="Which day did I eat the most calories?">My highest day</button>
+      <button type="button" data-prompt="How can I improve my task consistency?">Task consistency</button>
     </div>
     <form class="hulkie-compose" id="hulkie-form">
-      <label class="sr-only" for="hulkie-input">Ask Hulkie about your food diary</label>
-      <textarea id="hulkie-input" rows="1" maxlength="1500" placeholder="Ask anything about your food…" required></textarea>
+      <label class="sr-only" for="hulkie-input">Ask Hulkie about your Hulksar activity</label>
+      <textarea id="hulkie-input" rows="1" maxlength="1500" placeholder="Ask anything about your food, tasks or daily progress…" required></textarea>
       <button id="hulkie-send" type="submit" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 8-16 8 3-8-3-8Zm3 8h13" /></svg></button>
     </form>
-    <p class="hulkie-privacy">Hulkie only sees the food diary linked to your signed-in account.</p>
+    <p class="hulkie-privacy">Hulkie only uses food, task and tracker data linked to your signed-in account.</p>
   </section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
