@@ -46,7 +46,7 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) throw new Error(body.error || "Could not save your task.");
   return body;
 }
-const logsFor = (date: string) => new Map(logs.filter(log => log.date === date).map(log => [log.taskId, log.completed]));
+const logsFor = (date: string) => new Map<string, boolean>(logs.filter(log => log.date === date).map(log => [log.taskId, log.completed] as [string, boolean]));
 const tasksFor = (date: string) => tasks.filter(task => task.createdAt.slice(0, 10) <= date && (!task.archivedAt || task.archivedAt.slice(0, 10) > date));
 function completedCount(date: string) {
   const due = tasksFor(date), done = logsFor(date);
@@ -70,7 +70,7 @@ function renderDaily() {
   $("task-day-progress-fill").style.width = percent + "%";
   $("task-summary-done").textContent = done + " / " + due.length;
   $("task-summary-rate").textContent = due.length ? percent + "%" : "—";
-  $("task-summary-streak").textContent = activeStreak() + " days";
+  $("task-summary-streak").textContent = month === monthKey(new Date()) ? activeStreak() + " days" : "—";
   $("task-list").innerHTML = due.length ? due.map(task => {
     const checked = !!status.get(task.id);
     return `<div class="task-row ${checked ? "is-complete" : ""}" data-task-row="${esc(task.id)}">
@@ -153,7 +153,7 @@ $("task-add-form").addEventListener("submit", async event => {
   busy = true;
   try {
     await api("/api/tasks", { method: "POST", body: JSON.stringify({ title }) });
-    input.value = ""; await refresh(); feedback("Task added to your daily list.");
+    input.value = ""; month = monthKey(new Date()); selectedDate = dayKey(new Date()); await refresh(); feedback("Task added to your daily list.");
   } catch (error) { feedback(error instanceof Error ? error.message : "Could not add task.", true); }
   finally { busy = false; }
 });
