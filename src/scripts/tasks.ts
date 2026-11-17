@@ -1,3 +1,5 @@
+export {};
+
 type Task = { id: string; title: string; createdAt: string; archivedAt?: string | null };
 type TaskLog = { taskId: string; date: string; completed: boolean };
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
