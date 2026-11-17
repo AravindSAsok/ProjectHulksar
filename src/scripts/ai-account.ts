@@ -1,5 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-
 type ProviderModel = { id: string; name: string };
 type ProviderStatus = {
   provider: string;
@@ -95,10 +93,6 @@ if (providerSelect && modelSelect) {
   void loadModels();
 }
 
-const PRODUCTION_AUTH_REDIRECT = "https://projecthulksar.vercel.app/";
-
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
 const accountTrigger = document.getElementById("account-trigger") as HTMLButtonElement | null;
 const accountDialog = document.getElementById("account-dialog") as HTMLDialogElement | null;
 const accountForm = document.getElementById("account-form") as HTMLFormElement | null;
@@ -108,331 +102,141 @@ const accountModeToggle = document.getElementById("account-mode-toggle") as HTML
 const accountSubmit = document.getElementById("account-submit") as HTMLButtonElement | null;
 const accountSignout = document.getElementById("account-signout") as HTMLButtonElement | null;
 const accountSessionActions = document.getElementById("account-session-actions");
+const accountName = document.getElementById("account-name") as HTMLInputElement | null;
 const accountEmail = document.getElementById("account-email") as HTMLInputElement | null;
 const accountPassword = document.getElementById("account-password") as HTMLInputElement | null;
-const accountPasswordConfirm = document.getElementById("account-password-confirm") as HTMLInputElement | null;
-const accountChangePassword = document.getElementById("account-change-password") as HTMLButtonElement | null;
-const accountResend = document.getElementById("account-resend") as HTMLButtonElement | null;
-const accountForgot = document.getElementById("account-forgot") as HTMLButtonElement | null;
+const accountNameLabel = accountName?.closest("label") as HTMLLabelElement | null;
 const accountPasswordLabel = accountPassword?.closest("label") as HTMLLabelElement | null;
 const accountEmailLabel = accountEmail?.closest("label") as HTMLLabelElement | null;
-const accountPasswordConfirmLabel = accountPasswordConfirm?.closest("label") as HTMLLabelElement | null;
+const accountForgot = document.getElementById("account-forgot") as HTMLButtonElement | null;
+const accountResend = document.getElementById("account-resend") as HTMLButtonElement | null;
+const accountChangePassword = document.getElementById("account-change-password") as HTMLButtonElement | null;
 
-if (accountTrigger && accountDialog && accountForm && accountFields && accountStatus && accountModeToggle && accountSubmit && accountSignout && accountSessionActions && accountEmail && accountPassword && accountPasswordConfirm && accountChangePassword) {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    accountTrigger.disabled = true;
-    accountTrigger.textContent = "Cloud account unavailable";
-    accountStatus.textContent = "Add the public Supabase URL and anon key to enable accounts.";
-  } else {
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
-    let mode: "signup" | "signin" | "recovery" | "set-password" = "signup";
-    let activeUser: {
-      id: string;
-      email?: string;
-      is_anonymous?: boolean;
-      user_metadata?: Record<string, unknown>;
-    } | null = null;
-    const displayNameElement = document.getElementById("account-display-name");
-    const displayEmailElement = document.getElementById("account-display-email");
-    const profileSummary = document.getElementById("account-profile-summary");
-    const profileName = document.getElementById("account-profile-name");
-    const profileEmail = document.getElementById("account-profile-email");
-    const statusObserver = new MutationObserver(() => {
-      const message = accountStatus.textContent.toLowerCase();
-      const isError = /could not|couldn.t|failed|hasn.t been verified|must be at least|enter your|error|unavailable|rate limit|temporarily limited|expired|requires additional verification|reauthentication|passwords don.t match/.test(message);
-      const isSuccess = /sent to|sent a verification|fresh verification|safely synced|all set/.test(message);
-      accountStatus.classList.toggle("is-error", isError);
-      accountStatus.classList.toggle("is-success", !isError && isSuccess);
-      accountStatus.classList.toggle("is-info", !isError && !isSuccess);
-    });
-    statusObserver.observe(accountStatus, { childList: true, characterData: true, subtree: true });
+type AccountUser = { id: string; name: string; email: string };
+type AccountMode = "signup" | "signin";
+let accountMode: AccountMode = "signup";
+let activeUser: AccountUser | null = null;
 
-    const readableEmailName = (email?: string): string => {
-      const localPart = email?.split("@")[0]?.split("+")[0] || "";
-      const words = localPart.replace(/[._-]+/g, " ").trim();
-      return words ? words.replace(/\b\p{L}/gu, (letter) => letter.toLocaleUpperCase()) : "My account";
-    };
+const displayNameElement = document.getElementById("account-display-name");
+const displayEmailElement = document.getElementById("account-display-email");
+const profileSummary = document.getElementById("account-profile-summary");
+const profileName = document.getElementById("account-profile-name");
+const profileEmail = document.getElementById("account-profile-email");
 
-    const refreshAccount = async (): Promise<void> => {
-      const { data } = await supabase.auth.getUser();
-      activeUser = data.user as typeof activeUser;
-      const signedIn = Boolean(activeUser && !activeUser.is_anonymous);
-      const metadata = activeUser?.user_metadata ?? {};
-      const metadataName = [metadata.full_name, metadata.name, metadata.display_name]
-        .find((value) => typeof value === "string" && value.trim()) as string | undefined;
-      const email = activeUser?.email?.trim() || "";
-      const displayName = signedIn ? (metadataName?.trim() || readableEmailName(email)) : "Guest account";
+function setAccountStatus(message: string, kind: "info" | "success" | "error" = "info") {
+  if (!accountStatus) return;
+  accountStatus.textContent = message;
+  accountStatus.classList.toggle("is-error", kind === "error");
+  accountStatus.classList.toggle("is-success", kind === "success");
+  accountStatus.classList.toggle("is-info", kind === "info");
+}
 
-      if (displayNameElement) displayNameElement.textContent = displayName;
-      if (displayEmailElement) displayEmailElement.textContent = signedIn ? email : "Local diary";
-      if (profileName) profileName.textContent = displayName;
-      if (profileEmail) profileEmail.textContent = email || "Email address unavailable";
-      if (profileSummary) profileSummary.hidden = !signedIn;
-      accountFields.hidden = signedIn;
-      accountSessionActions.hidden = !signedIn;
-      accountModeToggle.hidden = signedIn;
-      accountStatus.textContent = signedIn
-        ? "Your diary is synced to this account."
-        : "Create an account to keep your diary accessible across devices, or sign in to an existing account.";
-      if (!signedIn) setMode("signup");
-    };
-
-    const setMode = (nextMode: "signup" | "signin" | "recovery" | "set-password"): void => {
-      mode = nextMode;
-      const recovery = mode === "recovery";
-      const settingPassword = mode === "set-password";
-      accountSubmit.textContent = recovery ? "Send reset link" : settingPassword ? "Save new password" : mode === "signup" ? "Create free account" : "Sign in";
-      accountModeToggle.hidden = settingPassword;
-      accountModeToggle.textContent = recovery ? "Back to sign in" : mode === "signup" ? "Already have an account? Sign in" : "New to Hulksar? Create account";
-      if (accountForgot) accountForgot.hidden = mode !== "signin";
-      if (accountEmailLabel) accountEmailLabel.hidden = settingPassword;
-      accountEmail.required = !settingPassword;
-      if (accountPasswordLabel) accountPasswordLabel.hidden = recovery;
-      if (accountPasswordConfirmLabel) {
-        accountPasswordConfirmLabel.hidden = !settingPassword;
-        accountPasswordConfirm.required = settingPassword;
-      }
-      if (!settingPassword) accountPasswordConfirm.value = "";
-      if (accountPassword) {
-        accountPassword.hidden = recovery;
-        accountPassword.required = !recovery;
-        accountPassword.autocomplete = mode === "signup" || settingPassword ? "new-password" : "current-password";
-        accountPassword.placeholder = settingPassword ? "Choose at least 8 characters" : "At least 8 characters";
-      }
-      if (accountPasswordLabel) {
-        const labelText = accountPasswordLabel.firstChild;
-        if (labelText && labelText.nodeType === Node.TEXT_NODE) labelText.textContent = settingPassword ? "New password" : "Password";
-      }
-      accountStatus.textContent = recovery
-        ? "No stress. Enter your email and we’ll send a secure password reset link."
-        : settingPassword
-          ? "Choose a new password for your Hulksar account. Use at least 8 characters."
-          : mode === "signup"
-            ? "Create your free Hulksar account to keep your food diary in sync across devices."
-            : "Welcome back. Sign in to see your meals, calorie goals and food history.";
-    };
-
-    accountTrigger.addEventListener("click", () => {
-      void refreshAccount().then(() => {
-        if (!accountDialog.open) accountDialog.showModal();
-      });
-    });
-    accountModeToggle.addEventListener("click", () => setMode(mode === "recovery" ? "signin" : mode === "signup" ? "signin" : "signup"));
-    accountForgot?.addEventListener("click", () => setMode("recovery"));
-    accountChangePassword.addEventListener("click", async () => {
-      accountChangePassword.disabled = true;
-      try {
-        // Ask Auth to validate the persisted session before exposing the password form.
-        const { data, error } = await supabase.auth.getUser();
-        if (error) throw error;
-        if (!data.user || data.user.is_anonymous) {
-          throw new Error("Your session has expired. Sign in again before setting a new password.");
-        }
-        activeUser = data.user as typeof activeUser;
-        accountFields.hidden = false;
-        accountSessionActions.hidden = true;
-        setMode("set-password");
-        accountStatus.textContent = "Forgot your password? No problem. Choose a new one below. Your signed-in account will stay connected.";
-        accountPassword.focus();
-      } catch (error) {
-        accountStatus.textContent = error instanceof Error ? error.message : "Could not verify your account session. Please sign in again.";
-      } finally {
-        accountChangePassword.disabled = false;
-      }
-    });
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        accountFields.hidden = false;
-        accountSessionActions.hidden = true;
-        if (profileSummary) profileSummary.hidden = true;
-        setMode("set-password");
-        accountStatus.textContent = "Reset link verified. Choose a new password to finish recovering your account.";
-        if (!accountDialog.open) accountDialog.showModal();
-      }
-    });
-
-    accountForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const email = accountEmail.value.trim();
-      const password = accountPassword.value;
-      const passwordConfirmation = accountPasswordConfirm.value;
-      if (!email && mode !== "set-password") {
-        accountStatus.textContent = "Enter your email address first.";
-        accountEmail.focus();
-        return;
-      }
-      if (mode !== "recovery" && password.length < 8) {
-        accountStatus.textContent = "Your password must be at least 8 characters long.";
-        accountPassword.focus();
-        return;
-      }
-      if (mode === "set-password" && password !== passwordConfirmation) {
-        accountStatus.textContent = "Those passwords don't match yet. Please check both fields.";
-        accountPasswordConfirm.focus();
-        return;
-      }
-      accountSubmit.disabled = true;
-      accountSubmit.textContent = mode === "recovery" ? "Sending…" : mode === "signup" ? "Creating…" : "Signing in…";
-      try {
-        if (mode === "recovery") {
-          const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: PRODUCTION_AUTH_REDIRECT });
-          if (error) throw error;
-          accountStatus.textContent = "Password reset email sent to " + email + ". Open the link in your inbox to choose a new password. Check spam too.";
-        } else if (mode === "set-password") {
-          // getUser() validates the current session with Supabase Auth; no forgotten password is requested.
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          if (userError) throw userError;
-          if (!userData.user || userData.user.is_anonymous) {
-            throw new Error("Your signed-in session has expired. Sign in again before setting a new password.");
-          }
-          const { error } = await supabase.auth.updateUser({ password });
-          if (error) throw error;
-          accountPassword.value = "";
-          accountPasswordConfirm.value = "";
-          await refreshAccount();
-          accountStatus.textContent = "Your password has been updated. You're still signed in on this device.";
-          accountStatus.classList.add("is-success");
-        } else if (mode === "signup") {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const isGuest = Boolean(sessionData.session?.user.is_anonymous);
-          const redirectTo = PRODUCTION_AUTH_REDIRECT;
-
-          if (isGuest) {
-            // Upgrade the current guest instead of creating a second user.
-            // This keeps the guest's cloud diary attached to the same auth user ID.
-            const { data, error } = await supabase.auth.updateUser(
-              { email, password },
-              { emailRedirectTo: redirectTo }
-            );
-            if (error) throw error;
-            if (data.user && !data.user.is_anonymous && sessionData.session) {
-              window.location.reload();
-              return;
-            }
-            if (accountResend) accountResend.hidden = false;
-            accountStatus.textContent = "Almost there! Supabase sent a verification link to " + email + ". Open it to finish creating your account. Your existing guest diary will stay attached to it.";
-          } else {
-            const { data, error } = await supabase.auth.signUp({
-              email,
-              password,
-              options: { emailRedirectTo: redirectTo }
-            });
-            if (error) throw error;
-            if (data.session && data.user && !data.user.is_anonymous) {
-              window.location.reload();
-              return;
-            }
-            if (accountResend) accountResend.hidden = false;
-            accountStatus.textContent = "We sent a verification link to " + email + ". Open that email, confirm your address, then return here to sign in.";
-          }
-        } else {
-          localStorage.setItem("trackcake.guest-backup.entries.v1", localStorage.getItem("trackcake.entries.v1") || "[]");
-          localStorage.setItem("trackcake.guest-backup.goal.v1", localStorage.getItem("trackcake.goal.v1") || "2000");
-          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) {
-            if ((error as { code?: string }).code === "email_not_confirmed") {
-              if (accountResend) accountResend.hidden = false;
-              accountStatus.textContent = "This email hasn't been verified yet. Tap Resend verification email below, then open the link before signing in.";
-              return;
-            }
-            throw error;
-          }
-          const guestEntries = JSON.parse(localStorage.getItem("trackcake.guest-backup.entries.v1") || "[]") as Array<Record<string, unknown>>;
-          const guestGoal = Number(localStorage.getItem("trackcake.guest-backup.goal.v1") || "2000");
-          if (data.user && guestEntries.length) {
-            // Browser-cached IDs can belong to a different Supabase user.
-            // Generate new IDs and INSERT so RLS can never be asked to update another user's row.
-            const rows = guestEntries
-              .filter((row) => row && typeof row.name === "string" && typeof row.eaten_at === "string")
-              .map((row) => ({
-                ...row,
-                id: crypto.randomUUID(),
-                user_id: data.user!.id
-              }));
-            if (rows.length) {
-              const { error: importError } = await supabase.from("food_entries").insert(rows);
-              if (importError) throw new Error("You are signed in, but your guest diary could not be copied to your account: " + importError.message);
-            }
-            const { error: goalError } = await supabase.from("tracker_settings").upsert({
-              user_id: data.user.id,
-              calorie_goal: Number.isInteger(guestGoal) && guestGoal >= 500 && guestGoal <= 10000 ? guestGoal : 2000
-            }, { onConflict: "user_id", ignoreDuplicates: true });
-            if (goalError) console.warn("Your existing cloud calorie goal was kept.", goalError);
-            localStorage.removeItem("trackcake.guest-backup.entries.v1");
-            localStorage.removeItem("trackcake.guest-backup.goal.v1");
-          }
-          window.location.reload();
-          return;
-        }
-      } catch (error) {
-        const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code) : "";
-        const message = error instanceof Error ? error.message : "Account action failed. Please try again.";
-        if (code === "email_not_confirmed") {
-          if (accountResend) accountResend.hidden = false;
-          accountStatus.textContent = "Please verify your email first. You can resend the confirmation link below.";
-        } else if (
-          code === "over_email_send_rate_limit" ||
-          /email rate limit exceeded|rate limit.*email|too many.*email/i.test(message)
-        ) {
-          accountStatus.textContent = "Supabase has temporarily paused password-reset emails because too many were requested. Please wait before trying again. If this keeps happening, configure a custom SMTP provider in Supabase and review the Auth email rate limits. You can go back to sign in in the meantime.";
-        } else if (/reauthentication|reauthenticate|nonce|recently logged in|current password/i.test(message)) {
-          accountStatus.textContent = "Supabase Auth requires additional verification for this password change. The app can't bypass that security setting. Use the secure email recovery option or review the password-change requirements in Supabase Auth settings.";
-        } else {
-          accountStatus.textContent = message;
-        }
-      } finally {
-        accountSubmit.disabled = false;
-        accountSubmit.textContent = mode === "recovery"
-          ? "Send reset link"
-          : mode === "set-password"
-            ? "Save new password"
-            : mode === "signup"
-              ? "Create free account"
-              : "Sign in";
-      }
-    });
-
-    accountResend?.addEventListener("click", async () => {
-      const email = accountEmail.value.trim();
-      if (!email) {
-        accountStatus.textContent = "Enter your email address first.";
-        accountEmail.focus();
-        return;
-      }
-      accountResend.disabled = true;
-      accountResend.textContent = "Sending…";
-      try {
-        const { error } = await supabase.auth.resend({
-          type: "signup",
-          email,
-          options: { emailRedirectTo: PRODUCTION_AUTH_REDIRECT }
-        });
-        if (error) throw error;
-        accountStatus.textContent = "A fresh verification link has been sent to " + email + ". Check your inbox and spam folder.";
-      } catch (error) {
-        accountStatus.textContent = error instanceof Error ? error.message : "Could not resend the verification email.";
-      } finally {
-        accountResend.disabled = false;
-        accountResend.textContent = "Resend verification email";
-      }
-    });
-
-    accountSignout.addEventListener("click", async () => {
-      accountSignout.disabled = true;
-      try {
-        localStorage.removeItem("trackcake.entries.v1");
-        localStorage.removeItem("trackcake.goal.v1");
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        window.location.reload();
-      } catch (error) {
-        accountStatus.textContent = error instanceof Error ? error.message : "Could not sign out.";
-        accountSignout.disabled = false;
-      }
-    });
-
-    void refreshAccount();
+function setAccountMode(mode: AccountMode) {
+  accountMode = mode;
+  if (accountNameLabel) accountNameLabel.hidden = mode !== "signup";
+  if (accountName) accountName.required = mode === "signup";
+  if (accountEmailLabel) accountEmailLabel.hidden = false;
+  if (accountEmail) accountEmail.required = true;
+  if (accountPasswordLabel) accountPasswordLabel.hidden = false;
+  if (accountPassword) {
+    accountPassword.required = true;
+    accountPassword.autocomplete = mode === "signup" ? "new-password" : "current-password";
+    accountPassword.placeholder = mode === "signup" ? "At least 8 characters" : "Your password";
   }
+  if (accountSubmit) accountSubmit.textContent = mode === "signup" ? "Create free account" : "Sign in";
+  if (accountModeToggle) {
+    accountModeToggle.hidden = Boolean(activeUser);
+    accountModeToggle.textContent = mode === "signup" ? "Already have an account? Sign in" : "New to Hulksar? Create account";
+  }
+  if (accountForgot) accountForgot.hidden = true;
+  if (accountResend) accountResend.hidden = true;
+  if (accountChangePassword) accountChangePassword.hidden = true;
+  setAccountStatus(mode === "signup"
+    ? "Create your Hulksar account. Your account and sign-in are securely stored in MongoDB."
+    : "Welcome back. Sign in to access your saved diary and tasks.");
+}
+
+async function refreshAccount(): Promise<void> {
+  const response = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+  if (!response.ok) throw new Error("Could not check your account session.");
+  const payload = await response.json() as { user?: AccountUser | null };
+  activeUser = payload.user ?? null;
+  const signedIn = Boolean(activeUser);
+  if (displayNameElement) displayNameElement.textContent = activeUser?.name || "Guest account";
+  if (displayEmailElement) displayEmailElement.textContent = activeUser?.email || "Local diary";
+  if (profileName) profileName.textContent = activeUser?.name || "";
+  if (profileEmail) profileEmail.textContent = activeUser?.email || "";
+  if (profileSummary) profileSummary.hidden = !signedIn;
+  if (accountFields) accountFields.hidden = signedIn;
+  if (accountSessionActions) accountSessionActions.hidden = !signedIn;
+  if (accountModeToggle) accountModeToggle.hidden = signedIn;
+  if (signedIn) setAccountStatus("You're signed in. Your diary and tasks use your MongoDB account.", "success");
+  else setAccountMode(accountMode);
+}
+
+if (accountTrigger && accountDialog && accountForm && accountFields && accountStatus && accountModeToggle && accountSubmit && accountSignout && accountSessionActions && accountName && accountEmail && accountPassword) {
+  accountTrigger.addEventListener("click", () => {
+    void refreshAccount().catch((error) => setAccountStatus(error instanceof Error ? error.message : "Could not load your account.", "error"))
+      .finally(() => { if (!accountDialog.open) accountDialog.showModal(); });
+  });
+
+  accountModeToggle.addEventListener("click", () => setAccountMode(accountMode === "signup" ? "signin" : "signup"));
+
+  accountForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const name = accountName.value.trim();
+    const email = accountEmail.value.trim().toLowerCase();
+    const password = accountPassword.value;
+    if (accountMode === "signup" && name.length < 2) {
+      setAccountStatus("Enter your name (at least 2 characters).", "error");
+      accountName.focus();
+      return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setAccountStatus("Enter a valid email address.", "error");
+      accountEmail.focus();
+      return;
+    }
+    if (password.length < 8 || password.length > 128) {
+      setAccountStatus("Your password must be between 8 and 128 characters.", "error");
+      accountPassword.focus();
+      return;
+    }
+
+    accountSubmit.disabled = true;
+    accountSubmit.textContent = accountMode === "signup" ? "Creating account…" : "Signing in…";
+    try {
+      const response = await fetch(accountMode === "signup" ? "/api/auth/signup" : "/api/auth/login", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(accountMode === "signup" ? { name, email, password } : { email, password })
+      });
+      const payload = await response.json().catch(() => ({})) as { user?: AccountUser; error?: string };
+      if (!response.ok || !payload.user) throw new Error(payload.error || "Account request failed. Please try again.");
+      setAccountStatus(accountMode === "signup" ? "Your account is ready. Welcome to Hulksar!" : "Signed in successfully. Welcome back!", "success");
+      window.location.reload();
+    } catch (error) {
+      setAccountStatus(error instanceof Error ? error.message : "Account request failed. Please try again.", "error");
+      accountSubmit.disabled = false;
+      accountSubmit.textContent = accountMode === "signup" ? "Create free account" : "Sign in";
+    }
+  });
+
+  accountSignout.addEventListener("click", async () => {
+    accountSignout.disabled = true;
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+      if (!response.ok) throw new Error("Could not sign out. Please try again.");
+      window.location.reload();
+    } catch (error) {
+      setAccountStatus(error instanceof Error ? error.message : "Could not sign out.", "error");
+      accountSignout.disabled = false;
+    }
+  });
+
+  void refreshAccount().catch((error) => {
+    console.warn("[hulksar-auth] Could not restore account session.", error);
+    setAccountStatus("Account status is temporarily unavailable. Your local diary remains available.", "error");
+  });
 }
