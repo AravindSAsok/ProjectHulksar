@@ -21,7 +21,6 @@ async function ensureIndexes(db: Db) {
     db.collection("food_entries").createIndex({ userId: 1, id: 1 }, { unique: true, name: "user_entry_unique" }),
     db.collection("food_entries").createIndex({ userId: 1, eaten_at: -1, id: -1 }, { name: "user_history" }),
     db.collection("tracker_settings").createIndex({ userId: 1 }, { unique: true, name: "user_settings_unique" }),
-    db.collection("migration_state").createIndex({ userId: 1, key: 1 }, { unique: true, name: "user_migration_unique" }),
     db.collection("assistant_messages").createIndex({ userId: 1, created_at: -1 }, { name: "user_assistant_history" })
   ]);
 }
@@ -37,36 +36,6 @@ function validEntry(value: unknown): value is FoodEntry {
 function docFor(entry: FoodEntry, userId: string): Document {
   return { ...entry, userId, name: entry.name.trim().slice(0, 120), amount: entry.amount.trim().slice(0, 100) };
 }
-async function importLegacyData(db: Db, supabase: Awaited<ReturnType<typeof authenticateRequest>>["supabase"], userId: string) {
-  const migrations = db.collection("migration_state");
-  const key = "supabase-postgres-v1";
-  if (await migrations.findOne({ userId, key })) return;
-  const entries = db.collection("food_entries");
-  let offset = 0;
-  while (offset < 50000) {
-    const { data, error } = await supabase.from("food_entries")
-      .select("id,name,amount,calories,protein_g,carbs_g,fat_g,meal_type,eaten_at,source")
-      .eq("user_id", userId).order("eaten_at", { ascending: false }).range(offset, offset + 99);
-    if (error) throw error;
-    const batch = data ?? [];
-    const rows = batch.filter(validEntry);
-    if (rows.length) await entries.bulkWrite(rows.map((entry) => ({
-      updateOne: { filter: { userId, id: entry.id }, update: { $setOnInsert: docFor(entry, userId) }, upsert: true }
-    })), { ordered: false });
-    if (!batch.length) break;
-    // Advance by the actual number returned to respect Supabase projects with low max_rows limits.
-    offset += batch.length;
-  }
-  const { data: settings, error: settingsError } = await supabase.from("tracker_settings")
-    .select("calorie_goal").eq("user_id", userId).maybeSingle();
-  if (settingsError) throw settingsError;
-  const goal = Number(settings?.calorie_goal);
-  if (Number.isInteger(goal) && goal >= 500 && goal <= 10000) {
-    await db.collection("tracker_settings").updateOne({ userId },
-      { $setOnInsert: { userId, calorie_goal: goal, updated_at: new Date().toISOString() } }, { upsert: true });
-  }
-  await migrations.updateOne({ userId, key }, { $setOnInsert: { userId, key, completed_at: new Date().toISOString() } }, { upsert: true });
-}
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
 }
@@ -74,7 +43,6 @@ async function context(request: Request) {
   const auth = await authenticateRequest(request);
   const db = await getMongoDb();
   await ensureIndexes(db);
-  await importLegacyData(db, auth.supabase, auth.user.id);
   return { ...auth, db };
 }
 
