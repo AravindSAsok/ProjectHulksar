@@ -23,58 +23,45 @@ const {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <script is:inline>
-      const themeButton = document.getElementById("theme-toggle");
-      const brandTitle = document.getElementById("app-brand-title");
-      const originalTitle = document.title;
-      const themes = ["light", "dark", "leveling"];
       try {
         const saved = localStorage.getItem("hulksar-theme");
-        document.documentElement.dataset.theme = themes.includes(saved) ? saved : "dark";
+        document.documentElement.dataset.theme = ["light", "dark", "leveling"].includes(saved) ? saved : "dark";
       } catch { document.documentElement.dataset.theme = "dark"; }
-      const syncTheme = () => {
-        const theme = document.documentElement.dataset.theme || "dark";
-        if (themeButton) {
-          const labels = { light: ["☀", "Light"], dark: ["☾", "Dark"], leveling: ["✦", "Level Up"] };
-          const current = labels[theme] || labels.dark;
-          const next = themes[(themes.indexOf(theme) + 1) % themes.length];
-          const nextLabels = { light: "light", dark: "dark", leveling: "Asar Is Leveling Up" };
-          themeButton.setAttribute("aria-label", "Switch to " + nextLabels[next] + " theme");
-          themeButton.setAttribute("title", "Switch to " + nextLabels[next] + " theme");
-          themeButton.innerHTML = '<span aria-hidden="true">' + current[0] + '</span><span>' + current[1] + '</span>';
-        }
-        if (brandTitle) brandTitle.innerHTML = theme === "leveling" ? 'ASAR IS <span>LEVELING UP</span>' : 'HULK<span>SAR</span>';
-        document.title = theme === "leveling" ? "Asar Is Leveling Up — Hulksar" : originalTitle;
-        const themeColor = document.querySelector('meta[name="theme-color"]');
-        if (themeColor) themeColor.setAttribute("content", theme === "leveling" ? "#080b18" : theme === "dark" ? "#09090b" : "#f7f2f3");
-      };
-      syncTheme();
-      themeButton?.addEventListener("click", () => {
-        const current = document.documentElement.dataset.theme || "dark";
-        const next = themes[(themes.indexOf(current) + 1) % themes.length];
-        document.documentElement.dataset.theme = next;
-        try { localStorage.setItem("hulksar-theme", next); } catch {}
-        syncTheme();
-      });
     </script>
   </head>
   <body>
     <slot />
     <script is:inline>
-      const themeButton = document.getElementById("theme-toggle");
-      const syncThemeButton = () => {
-        const light = document.documentElement.dataset.theme === "light";
-        if (!themeButton) return;
-        themeButton.setAttribute("aria-label", light ? "Switch to dark theme" : "Switch to light theme");
-        themeButton.setAttribute("title", light ? "Switch to dark theme" : "Switch to light theme");
-        themeButton.innerHTML = light ? '<span aria-hidden="true">☾</span><span>Dark</span>' : '<span aria-hidden="true">☀</span><span>Light</span>';
-      };
-      syncThemeButton();
-      themeButton?.addEventListener("click", () => {
-        const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-        document.documentElement.dataset.theme = next;
-        try { localStorage.setItem("hulksar-theme", next); } catch {}
-        syncThemeButton();
-      });
+      (() => {
+        const themeButton = document.getElementById("theme-toggle");
+        const brandTitle = document.getElementById("app-brand-title");
+        const originalTitle = document.title;
+        const themes = ["light", "dark", "leveling"];
+        const syncTheme = () => {
+          const theme = document.documentElement.dataset.theme || "dark";
+          if (themeButton) {
+            const labels = { light: ["☀", "Light"], dark: ["☾", "Dark"], leveling: ["✦", "Level Up"] };
+            const next = themes[(themes.indexOf(theme) + 1) % themes.length];
+            const nextLabels = { light: "light", dark: "dark", leveling: "Asar Is Leveling Up" };
+            const current = labels[theme] || labels.dark;
+            themeButton.setAttribute("aria-label", "Switch to " + nextLabels[next] + " theme");
+            themeButton.setAttribute("title", "Switch to " + nextLabels[next] + " theme");
+            themeButton.innerHTML = '<span aria-hidden="true">' + current[0] + '</span><span>' + current[1] + '</span>';
+          }
+          if (brandTitle) brandTitle.innerHTML = theme === "leveling" ? 'ASAR IS <span>LEVELING UP</span>' : 'HULK<span>SAR</span>';
+          document.title = theme === "leveling" ? "Asar Is Leveling Up — Hulksar" : originalTitle;
+          const themeColor = document.querySelector('meta[name="theme-color"]');
+          if (themeColor) themeColor.setAttribute("content", theme === "leveling" ? "#080b18" : theme === "dark" ? "#09090b" : "#f7f2f3");
+        };
+        syncTheme();
+        themeButton?.addEventListener("click", () => {
+          const current = document.documentElement.dataset.theme || "dark";
+          const next = themes[(themes.indexOf(current) + 1) % themes.length];
+          document.documentElement.dataset.theme = next;
+          try { localStorage.setItem("hulksar-theme", next); } catch {}
+          syncTheme();
+        });
+      })();
     </script>
   </body>
 </html>
