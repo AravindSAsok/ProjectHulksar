@@ -1,3 +1,4 @@
+import { assertFreeOpenRouterModel } from "../../lib/openrouter-models";
 import type { APIRoute } from "astro";
 import { researchNutrition, type NutritionItem } from "../../lib/nutrition-research";
 
@@ -154,6 +155,7 @@ async function estimateWithFallback(description: string, requestedProvider: Prov
   const groqKey = process.env.GROQ_API_KEY?.trim();
   const geminiKey = process.env.GEMINI_API_KEY?.trim();
   const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+  if (requestedProvider === "openrouter" && requestedModel && openRouterKey) await assertFreeOpenRouterModel(openRouterKey, requestedModel);
   const attempts: Array<{ provider: Provider; model: string; run: () => Promise<string> }> = [];
 
   if (groqKey) {
@@ -168,9 +170,9 @@ async function estimateWithFallback(description: string, requestedProvider: Prov
     }
   }
   if (openRouterKey) {
-    const model = requestedModel || process.env.OPENROUTER_MODEL?.trim() || "baidu/ernie-5.5-flash-preview:free";
+    const model = requestedModel || "openrouter/free";
     attempts.push({ provider: "openrouter", model, run: () => callOpenAICompatible("openrouter", openRouterKey, model, prompt) });
-    const fallbackModel = "inclusionai/ling-3.2-flash:free";
+    const fallbackModel = "openrouter/free";
     if (!requestedModel && model !== fallbackModel) {
       attempts.push({ provider: "openrouter", model: fallbackModel, run: () => callOpenAICompatible("openrouter", openRouterKey, fallbackModel, prompt) });
     }
