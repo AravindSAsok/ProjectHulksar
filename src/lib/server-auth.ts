@@ -1,11 +1,6 @@
-import { createClient, type User } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
-export interface AuthenticatedRequest {
-  user: User;
-  supabase: ReturnType<typeof createClient>;
-}
-
-export async function authenticateRequest(request: Request): Promise<AuthenticatedRequest> {
+export async function authenticateRequest(request: Request) {
   const url = process.env.PUBLIC_SUPABASE_URL?.trim();
   const anonKey = process.env.PUBLIC_SUPABASE_ANON_KEY?.trim();
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();

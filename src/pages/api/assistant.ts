@@ -206,8 +206,8 @@ export const POST: APIRoute = async ({ request }) => {
       }).sort({ created_at: -1 }).limit(10).toArray(),
       db.collection("tracker_settings").findOne({ userId: user.id })
     ]);
-    const rows = foodRows as FoodRow[];
-    const history = historyRows.reverse() as ChatMessage[];
+    const rows = foodRows as unknown as FoodRow[];
+    const history = historyRows.reverse() as unknown as ChatMessage[];
     const daily = buildDiaryContext(rows, timeZone);
     const today = dayKey(new Date().toISOString(), timeZone);
     const configuredGoal = Number(settings?.calorie_goal);
