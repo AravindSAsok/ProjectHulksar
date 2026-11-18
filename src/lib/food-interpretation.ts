@@ -23,9 +23,10 @@ export type FoodIngredientNutrition = {
 
 export function parseFoodIngredients(value: unknown): FoodIngredientNutrition[] | undefined {
   if (value === undefined || value === null) return undefined;
-  if (!Array.isArray(value) || value.length < 2 || value.length > 20) {
+  if (!Array.isArray(value) || value.length > 20) {
     throw new Error("The AI returned an invalid ingredient breakdown.");
   }
+  if (value.length < 2) return undefined;
   return value.map((entry): FoodIngredientNutrition => {
     if (!entry || typeof entry !== "object") throw new Error("The AI returned an invalid ingredient.");
     const row = entry as Record<string, unknown>;

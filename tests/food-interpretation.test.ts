@@ -22,8 +22,8 @@ test("single-ingredient foods may omit ingredient breakdown", () => {
   assert.equal(parseFoodIngredients(undefined), undefined);
 });
 
-test("invalid or single-entry ingredient breakdowns are rejected", () => {
-  assert.throws(() => parseFoodIngredients([{ name: "Milk", amount: "100 ml", calories: 62, protein_g: 3, carbs_g: 5, fat_g: 3 }]));
+test("single-entry breakdowns are treated as standalone foods and invalid breakdowns are rejected", () => {
+  assert.equal(parseFoodIngredients([{ name: "Milk", amount: "100 ml", calories: 62, protein_g: 3, carbs_g: 5, fat_g: 3 }]), undefined);
   assert.throws(() => parseFoodIngredients([
     { name: "Milk", amount: "100 ml", calories: -1, protein_g: 3, carbs_g: 5, fat_g: 3 },
     { name: "Sugar", amount: "1 tsp", calories: 16, protein_g: 0, carbs_g: 4, fat_g: 0 }
