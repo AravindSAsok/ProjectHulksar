@@ -1,6 +1,7 @@
 import { assertFreeOpenRouterModel } from "../../lib/openrouter-models";
 import type { APIRoute } from "astro";
 import { researchNutrition, type NutritionItem } from "../../lib/nutrition-research";
+import { FOOD_ENTITY_INTERPRETATION_RULES } from "../../lib/food-interpretation";
 
 export const prerender = false;
 export const maxDuration = 60;
@@ -56,7 +57,8 @@ function parseItems(raw: string): FoodItem[] {
 
 const visionPrompt = (context: string) => [
   "You are a careful food identification assistant. Nutrition values will be checked against food databases after identification.",
-  "Inspect the meal photo and identify each visible food item separately when possible.",
+  "Inspect the meal photo and identify separately served or independently consumed foods. Do not split a prepared dish or beverage into its ingredients.",
+  ...FOOD_ENTITY_INTERPRETATION_RULES,
   "Use the user's description as authoritative for food names, brands, preparation and exact quantities. Preserve explicit quantities and units; do not replace them with visual guesses.",
   "When no amount is provided, estimate a realistic edible portion from visual cues and state the unit. Do not claim exact weights that cannot be seen.",
   "For packaged products, read the visible brand, exact product name, flavour, net weight and barcode if legible. Do NOT invent a barcode.",

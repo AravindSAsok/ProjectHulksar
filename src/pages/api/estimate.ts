@@ -1,6 +1,7 @@
 import { assertFreeOpenRouterModel } from "../../lib/openrouter-models";
 import type { APIRoute } from "astro";
 import { researchNutrition, type NutritionItem } from "../../lib/nutrition-research";
+import { FOOD_ENTITY_INTERPRETATION_RULES } from "../../lib/food-interpretation";
 
 export const prerender = false;
 export const maxDuration = 60;
