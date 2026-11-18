@@ -85,7 +85,7 @@ const promptFor = (description: string) => [
   "The sum of ingredient nutrition values MUST equal the parent food item totals. The parent amount describes the complete serving. For a genuinely single-ingredient food, omit ingredients.",
   "Do not let a later database lookup replace a combined dish estimate with a match for only one component.",
   "Provide a conservative fallback nutrition estimate, but verified nutrition lookup will replace it when a reliable match is found for a standalone food.",
-  'Return only JSON: {"items":[{"name":"food name","amount":"portion and unit","brand":"brand or empty","product_name":"exact product or empty","calories":number,"protein_g":number,"carbs_g":number,"fat_g":number}]}',
+  'Return only JSON: {"items":[{"name":"food name","amount":"portion and unit","brand":"brand or empty","product_name":"exact product or empty","ingredients":[{"name":"ingredient","amount":"amount","calories":number,"protein_g":number,"carbs_g":number,"fat_g":number}],"calories":number,"protein_g":number,"carbs_g":number,"fat_g":number}]}',
   "Calories are kcal. Macros are grams. Use non-negative numbers. No advice, markdown, or extra keys.",
   "Food description:", description
 ].join("\n");

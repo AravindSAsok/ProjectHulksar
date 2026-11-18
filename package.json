@@ -11,6 +11,7 @@
     "build": "astro build",
     "preview": "astro preview --host 0.0.0.0",
     "check": "astro check",
+    "test:food": "node --experimental-strip-types --test tests/food-interpretation.test.ts",
     "start:render": "node ./dist/server/entry.mjs"
   },
   "dependencies": {
