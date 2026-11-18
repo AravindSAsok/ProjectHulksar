@@ -1,7 +1,7 @@
 import { assertFreeOpenRouterModel } from "../../lib/openrouter-models";
 import type { APIRoute } from "astro";
 import { researchNutrition, type NutritionItem } from "../../lib/nutrition-research";
-import { FOOD_ENTITY_INTERPRETATION_RULES } from "../../lib/food-interpretation";
+import { FOOD_ENTITY_INTERPRETATION_RULES, parseFoodIngredients, aggregateIngredientNutrition } from "../../lib/food-interpretation";
 
 export const prerender = false;
 export const maxDuration = 60;
@@ -30,7 +30,9 @@ function parseItems(value: unknown): EstimatedItem[] {
     const item = entry as Record<string, unknown>;
     const name = typeof item.name === "string" ? item.name.trim().slice(0, 90) : "";
     const amount = typeof item.amount === "string" ? item.amount.trim().slice(0, 90) : "";
-    const calories = Math.round(asNumber(item.calories));
+    const ingredients = parseFoodIngredients(item.ingredients);
+    const ingredientTotals = ingredients ? aggregateIngredientNutrition(ingredients) : undefined;
+    const calories = Math.round(ingredientTotals?.calories ?? asNumber(item.calories));
     if (!name || !amount || calories <= 0 || calories > 10000) {
       throw new Error("The AI provider returned an incomplete nutrition estimate.");
     }
@@ -40,7 +42,9 @@ function parseItems(value: unknown): EstimatedItem[] {
       carbs_g: asNumber(item.carbs_g),
       fat_g: asNumber(item.fat_g),
       brand: typeof item.brand === "string" ? item.brand.trim().slice(0, 80) : undefined,
-      product_name: typeof item.product_name === "string" ? item.product_name.trim().slice(0, 100) : undefined
+      product_name: typeof item.product_name === "string" ? item.product_name.trim().slice(0, 100) : undefined,
+      ingredients,
+      ...(ingredientTotals ? { protein_g: ingredientTotals.protein_g, carbs_g: ingredientTotals.carbs_g, fat_g: ingredientTotals.fat_g } : {})
     };
   });
   if (!items.length) throw new Error("No foods were found in that description.");
@@ -77,7 +81,10 @@ const promptFor = (description: string) => [
   "Preserve every explicit user quantity and unit exactly; never replace a stated amount with a guessed serving.",
   ...FOOD_ENTITY_INTERPRETATION_RULES,
   "Use realistic edible portion estimates only when the user gives no amount.",
-  "Provide a conservative fallback nutrition estimate, but verified nutrition lookup will replace it when a reliable match is found.",
+  "For a prepared dish or drink containing multiple ingredients, include an ingredients array with one entry per actual ingredient, each with its own amount and estimated calories/protein_g/carbs_g/fat_g. Do not create separate top-level food items for these ingredients.",
+  "The sum of ingredient nutrition values MUST equal the parent food item totals. The parent amount describes the complete serving. For a genuinely single-ingredient food, omit ingredients.",
+  "Do not let a later database lookup replace a combined dish estimate with a match for only one component.",
+  "Provide a conservative fallback nutrition estimate, but verified nutrition lookup will replace it when a reliable match is found for a standalone food.",
   'Return only JSON: {"items":[{"name":"food name","amount":"portion and unit","brand":"brand or empty","product_name":"exact product or empty","calories":number,"protein_g":number,"carbs_g":number,"fat_g":number}]}',
   "Calories are kcal. Macros are grams. Use non-negative numbers. No advice, markdown, or extra keys.",
   "Food description:", description

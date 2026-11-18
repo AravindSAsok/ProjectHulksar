@@ -1,7 +1,7 @@
 import { assertFreeOpenRouterModel } from "../../lib/openrouter-models";
 import type { APIRoute } from "astro";
 import { researchNutrition, type NutritionItem } from "../../lib/nutrition-research";
-import { FOOD_ENTITY_INTERPRETATION_RULES } from "../../lib/food-interpretation";
+import { FOOD_ENTITY_INTERPRETATION_RULES, parseFoodIngredients, aggregateIngredientNutrition } from "../../lib/food-interpretation";
 
 export const prerender = false;
 export const maxDuration = 60;
@@ -40,7 +40,9 @@ function parseItems(raw: string): FoodItem[] {
       const parsedNumber = Number(input);
       return Number.isFinite(parsedNumber) ? Math.max(0, Math.round(parsedNumber * 10) / 10) : 0;
     };
-    const calories = Math.round(number(row.calories));
+    const ingredients = parseFoodIngredients(row.ingredients);
+    const ingredientTotals = ingredients ? aggregateIngredientNutrition(ingredients) : undefined;
+    const calories = Math.round(ingredientTotals?.calories ?? number(row.calories));
     if (!name || !amount || calories <= 0 || calories > 10000) {
       throw new Error("The AI returned an incomplete estimate. Please review another photo.");
     }
@@ -49,6 +51,8 @@ function parseItems(raw: string): FoodItem[] {
       protein_g: number(row.protein_g), carbs_g: number(row.carbs_g), fat_g: number(row.fat_g),
       brand: typeof row.brand === "string" ? row.brand.trim().slice(0, 80) : undefined,
       product_name: typeof row.product_name === "string" ? row.product_name.trim().slice(0, 100) : undefined,
+      ingredients,
+      ...(ingredientTotals ? { protein_g: ingredientTotals.protein_g, carbs_g: ingredientTotals.carbs_g, fat_g: ingredientTotals.fat_g } : {}),
       barcode: typeof row.barcode === "string" && /^\d{8,14}$/.test(row.barcode) ? row.barcode : undefined
     };
   });
@@ -62,10 +66,13 @@ const visionPrompt = (context: string) => [
   "Use the user's description as authoritative for food names, brands, preparation and exact quantities. Preserve explicit quantities and units; do not replace them with visual guesses.",
   "When no amount is provided, estimate a realistic edible portion from visual cues and state the unit. Do not claim exact weights that cannot be seen.",
   "For packaged products, read the visible brand, exact product name, flavour, net weight and barcode if legible. Do NOT invent a barcode.",
-  "For mixed dishes, identify the visible dish and list ingredients only when they are reasonably identifiable.",
+  "For a prepared dish or drink containing multiple ingredients, include an ingredients array with one entry per actual ingredient, each with its own amount and estimated calories/protein_g/carbs_g/fat_g. Do not create separate top-level food items for these ingredients.",
+  "The sum of ingredient nutrition values MUST equal the parent food item totals. The parent amount describes the complete serving. For a genuinely single-ingredient food, omit ingredients.",
+  "For mixed dishes, identify the visible dish and list ingredients only when they are reasonably identifiable. Do not invent hidden ingredients or exact amounts.",
+  "Do not let a later database lookup replace a combined dish estimate with a match for only one component.",
   "Provide conservative fallback nutrition values, not claims of verified data.",
   "If the image is not food or the food cannot be identified, return an empty items array.",
-  "Return only JSON in this exact shape: {\"items\":[{\"name\":\"food name\",\"amount\":\"portion and unit\",\"brand\":\"brand or empty\",\"product_name\":\"exact product or empty\",\"barcode\":\"digits only or empty\",\"calories\":number,\"protein_g\":number,\"carbs_g\":number,\"fat_g\":number}]}",
+  "Return only JSON in this exact shape: {\"items\":[{\"name\":\"food name\",\"amount\":\"portion and unit\",\"brand\":\"brand or empty\",\"product_name\":\"exact product or empty\",\"barcode\":\"digits only or empty\",\"ingredients\":[{\"name\":\"ingredient\",\"amount\":\"amount\",\"calories\":number,\"protein_g\":number,\"carbs_g\":number,\"fat_g\":number}],\"calories\":number,\"protein_g\":number,\"carbs_g\":number,\"fat_g\":number}]}",
   "Calories are kcal; macros are grams. Use non-negative numeric values. No markdown or extra commentary.",
   context ? "User-provided food details and exact quantity: " + context : "The user did not provide additional food details."
 ].join("\n");

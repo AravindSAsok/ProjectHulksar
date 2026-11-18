@@ -5,6 +5,7 @@ export type NutritionItem = {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  ingredients?: import("./food-interpretation").FoodIngredientNutrition[];
   brand?: string;
   product_name?: string;
   barcode?: string;
@@ -308,6 +309,20 @@ export async function researchNutrition(
   onProgress: (message: string) => void = () => {}
 ): Promise<NutritionItem[]> {
   return Promise.all(items.map(async (item, index) => {
+    if (item.ingredients && item.ingredients.length > 1) {
+      const totals = item.ingredients.reduce((sum, ingredient) => ({
+        calories: sum.calories + ingredient.calories,
+        protein_g: sum.protein_g + ingredient.protein_g,
+        carbs_g: sum.carbs_g + ingredient.carbs_g,
+        fat_g: sum.fat_g + ingredient.fat_g
+      }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+      onProgress("Combining ingredient nutrition for " + item.name + "…");
+      return {
+        ...item, ...totals,
+        nutrition_source: "AI ingredient breakdown · combined estimate",
+        nutrition_basis: item.ingredients.map((ingredient) => ingredient.name + " (" + ingredient.amount + ")").join(" + ")
+      };
+    }
     onProgress("Checking nutrition sources for " + item.name + "…");
     const product = await lookupOpenFoodFacts(item);
     if (product) return product;
