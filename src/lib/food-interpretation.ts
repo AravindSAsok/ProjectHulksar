@@ -43,10 +43,16 @@ export function parseFoodIngredients(value: unknown): FoodIngredientNutrition[] 
 }
 
 export function aggregateIngredientNutrition(ingredients: FoodIngredientNutrition[]) {
-  return ingredients.reduce((total, ingredient) => ({
+  const totals = ingredients.reduce((total, ingredient) => ({
     calories: total.calories + ingredient.calories,
     protein_g: total.protein_g + ingredient.protein_g,
     carbs_g: total.carbs_g + ingredient.carbs_g,
     fat_g: total.fat_g + ingredient.fat_g
   }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+  return {
+    calories: Math.round(totals.calories * 10) / 10,
+    protein_g: Math.round(totals.protein_g * 10) / 10,
+    carbs_g: Math.round(totals.carbs_g * 10) / 10,
+    fat_g: Math.round(totals.fat_g * 10) / 10
+  };
 }

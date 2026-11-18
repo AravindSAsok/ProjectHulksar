@@ -310,12 +310,15 @@ export async function researchNutrition(
 ): Promise<NutritionItem[]> {
   return Promise.all(items.map(async (item, index) => {
     if (item.ingredients && item.ingredients.length > 1) {
-      const totals = item.ingredients.reduce((sum, ingredient) => ({
+      const rawTotals = item.ingredients.reduce((sum, ingredient) => ({
         calories: sum.calories + ingredient.calories,
         protein_g: sum.protein_g + ingredient.protein_g,
         carbs_g: sum.carbs_g + ingredient.carbs_g,
         fat_g: sum.fat_g + ingredient.fat_g
       }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+      const totals = Object.fromEntries(
+        Object.entries(rawTotals).map(([key, value]) => [key, Math.round(value * 10) / 10])
+      ) as typeof rawTotals;
       onProgress("Combining ingredient nutrition for " + item.name + "…");
       return {
         ...item, ...totals,
