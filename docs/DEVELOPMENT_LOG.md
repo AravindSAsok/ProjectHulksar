@@ -86,6 +86,7 @@ Append-only record of meaningful implementation and operational changes.
 - Hardened the MongoDB archive filter to handle legacy null/missing/empty archive fields, check matchedCount and confirm an already-archived state before reporting success. All queries remain scoped by the authenticated userId; no physical deletion or historical log deletion occurs.
 - Delete failures now show the actual API error; only network-level failures show the standard 2-second unstable-network warning.
 - Changed files: src/scripts/tasks.ts, src/pages/api/tasks.ts, AGENTS.md, agent.md, docs/DEVELOPMENT_LOG.md.
-- Verification: source-level patch review. npm run check, npm run build, automated API tests, authenticated browser/mobile testing and Vercel production verification remain pending.
-- Commit/deployment: pending.
-- Remaining risks: no access to the complaining user's authenticated browser session or task document, so the exact production failure has not been reproduced against that account. The fixes address the identified code-path defects and harden archive behavior.
+- Verification: Vercel production `npm run build` completed successfully for this commit; deployment reached READY and the production aliases were assigned. Source-level checks confirmed local-date filtering, task-specific action state, legacy archive-field handling and MongoDB matchedCount verification. `npm run check`, automated API tests, and authenticated browser/mobile delete testing were not run.
+- Commit: `eb72e746cf8d00a54473320274b1c4da1150fda9` — https://github.com/AravindSAsok/ProjectHulksar/commit/eb72e746cf8d00a54473320274b1c4da1150fda9
+- Production deployment: READY — https://projecthulksar-2v1qa83wu-kukki.vercel.app (production aliases include https://projecthulksar.vercel.app).
+- Remaining risks: no access to the complaining user's authenticated browser session or task document, so the exact production failure has not been reproduced against that account. A real-user delete confirmation is still needed.
