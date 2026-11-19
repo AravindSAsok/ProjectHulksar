@@ -65,7 +65,7 @@ function makeDays(start: string, end: string, food: Food[], tasks: Task[], logs:
 function lineChart(days: Day[], key: "calories" | "rate", suffix: string) {
   const width = 760, height = 250, left = 48, right = 18, top = 16, bottom = 48;
   const values = days.map(day => day[key]);
-  const max = Math.max(10, ...values) * 1.12;
+  const max = key === "rate" ? 100 : Math.max(10, ...values) * 1.12;
   const x = (i: number) => left + (days.length <= 1 ? 0 : i * (width - left - right) / (days.length - 1));
   const y = (v: number) => top + (height - top - bottom) * (1 - v / max);
   const path = values.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join(" ");
@@ -105,7 +105,7 @@ function renderStats(days: Day[], showFood: boolean, showTasks: boolean) {
   const protein = days.reduce((n, d) => n + d.protein, 0);
   const possible = days.reduce((n, d) => n + d.possible, 0);
   const done = days.reduce((n, d) => n + d.done, 0);
-  const active = days.filter(d => d.foodCount || d.done > 0).length;
+  const active = days.filter(d => (showFood && d.foodCount > 0) || (showTasks && d.done > 0)).length;
   const stats: [string, string, string][] = [];
   if (showFood) {
     stats.push(["Calories logged", fmt(calories) + " kcal", foodCount + " food entries"]);
@@ -154,7 +154,7 @@ async function load() {
     const days = makeDays(startInput.value, endInput.value, payload.food || [], payload.tasks || [], payload.logs || []);
     const showFood = scope.value !== "tasks", showTasks = scope.value !== "food";
     renderStats(days, showFood, showTasks);
-    el<HTMLHeadingElement>("analytics-trend-title").textContent = showFood && showTasks ? "Nutrition and habit activity" : showFood ? "Calories over time" : "Task completion over time";
+    el<HTMLHeadingElement>("analytics-trend-title").textContent = showFood && showTasks ? "Daily calories · task chart below" : showFood ? "Calories over time" : "Task completion over time";
     el<HTMLSpanElement>("analytics-trend-note").textContent = showFood ? "X: date · Y: kcal" : "X: date · Y: completion %";
     el<HTMLDivElement>("analytics-trend").innerHTML = showFood ? lineChart(days, "calories", "kcal") : lineChart(days, "rate", "%");
     el<HTMLDivElement>("analytics-meals").closest("article")!.hidden = !showFood;

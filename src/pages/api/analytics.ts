@@ -1,5 +1,4 @@
 import type { APIRoute } from "astro";
-import type { Document } from "mongodb";
 import { authenticateRequest } from "../../lib/server-auth";
 import { getMongoDb } from "../../lib/mongodb";
 
