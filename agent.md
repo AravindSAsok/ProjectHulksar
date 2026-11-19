@@ -1,5 +1,8 @@
 # Hulksar Agent Guide
 
+> **Canonical instructions:** read the root [`AGENTS.md`](./AGENTS.md) first. This legacy filename is retained for compatibility; keep shared contributor rules aligned with `AGENTS.md`.
+
+
 This file is the working agreement for AI coding agents and human contributors maintaining Hulksar. Read it before making changes.
 
 ## 1. Product and priorities
