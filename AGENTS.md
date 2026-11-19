@@ -33,7 +33,7 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Manual, AI text and photo food entry; review-before-save; edit/delete; meal assignment; food history filters and pagination.
 - Calorie goal, macro totals, daily meal breakdown, seven-day consistency, local fallback and MongoDB sync.
 - Supabase email/password and anonymous auth/session behavior.
-- Task creation, rename/archive, date-specific check-ins, monthly calendar and historical logs. Both the checkbox and task title must toggle completion with one click/tap; preserve native button keyboard accessibility and provide a comfortable mobile hit target.
+- Task creation, rename/archive, date-specific check-ins, monthly calendar and historical logs. Both the checkbox and task title must toggle completion with one click/tap; preserve native button keyboard accessibility and provide a comfortable mobile hit target. Task editing uses the in-app theme-aware dialog with separate Save/Delete actions and an explicit delete confirmation; do not reintroduce browser-native prompt/confirm dialogs for task editing.
 - Hulkie popup, chat history, provider/model choice, fallback and authenticated requests.
 - Responsive dark/light/leveling themes, keyboard accessibility and mobile-friendly dialogs.
 
@@ -60,13 +60,13 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Keep feedback accessible (role=status/aria-live), touch targets comfortable, and keyboard activation functional. Do not optimistically discard data on a failed mutation without a clear rollback or local-save behavior.
 
 ## Development workflow
-1. Read this file, \`README.md\`, the latest relevant docs, and the source files being changed.
-2. Inspect current branch, latest commit, working tree and open PRs. Work on a feature branch unless the user explicitly requests a direct main push.
+1. Read this file, README.md, agent.md, the latest relevant docs, and the source files being changed.
+2. Inspect the current main commit, working tree and open PRs/issues before editing. **The default and required destination for all completed code and documentation changes is main: commit and push directly to main.** Do not create feature branches or PRs unless the user explicitly asks for a branch/PR or a repository protection rule technically prevents a direct push. If direct push is blocked, explain the blocker and ask before using a PR workflow.
 3. Trace the complete UI → client script → API → storage flow before editing.
 4. Define data contracts and user-visible behavior. Identify regressions that must be prevented.
 5. Reuse existing styles, helpers, auth and persistence. Avoid duplicate listeners, duplicate state stores and unnecessary dependencies.
 6. Keep TypeScript strict, validate untrusted inputs, escape user-generated HTML, and surface useful errors without leaking secrets.
-7. Update documentation and \`docs/DEVELOPMENT_LOG.md\` when behavior, architecture, data contracts, setup, deployment or known limitations change.
+7. **For every meaningful task, update AGENTS.md with durable current project knowledge, changed behavior, architecture/contracts, or agent instructions so the next agent/chat can continue without relying on chat history. Also append a dated entry to docs/DEVELOPMENT_LOG.md recording the goal, root cause, changed files, behavior/data/API impact, checks actually run, commit/deployment reference, and remaining risks.** Keep agent.md aligned with shared workflow rules. Do not add transient chatter or duplicate the full chronological log into AGENTS.md.
 8. Add or update focused tests for non-trivial calculations, date boundaries, ownership and edge cases.
 
 ## Before commit / push
@@ -75,13 +75,13 @@ Run:
 - \`npm run check\`
 - \`npm run build\`
 - Relevant tests (including \`npm run test:food\` when food logic is affected).
-Review the complete diff for unrelated changes, secrets, debug statements, accessibility and mobile overflow. Never claim a check passed unless it actually ran and passed. Do not force-push or rewrite shared history.
+Review the complete diff for unrelated changes, secrets, debug statements, accessibility and mobile overflow. Never claim a check passed unless it actually ran and passed. Do not force-push or rewrite shared history. Push completed changes directly to main by default; use another branch only when the user explicitly requests it or GitHub protection rules make a direct push impossible.
 
 ## Release and deployment
 After pushing, confirm CI for the exact commit, inspect Vercel deployment state and production alias, and smoke-test the deployed app when browser tooling is available. Separate build verification from authenticated-user, provider, mobile-device and production runtime testing. Keep the last known-good deployment intact if a release fails.
 
 ## Change log maintenance
-Record each meaningful update in \`docs/DEVELOPMENT_LOG.md\`: date, summary, changed files, data/API impact, tests actually run, deployment/commit reference, and remaining risks. Append entries; do not erase historical entries. Update this guide whenever a rule or architecture changes.
+Record each meaningful update in docs/DEVELOPMENT_LOG.md: date, summary, changed files, data/API impact, tests actually run, deployment/commit reference, and remaining risks. Append entries; do not erase historical entries. Update AGENTS.md with durable knowledge and current instructions so every future agent/chat can pick up the project state. Keep agent.md aligned with shared workflow rules. Never treat a chat reply as a substitute for repository documentation.
 
 ## Completion report
 Every agent task must report: root cause or goal, files changed, user-visible behavior, data/security impact, checks actually run, checks not run, commit SHA/link, deployment URL/status if applicable, and known limitations. Be precise. Accuracy is more important than a green-looking report.
