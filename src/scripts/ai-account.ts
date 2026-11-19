@@ -15,6 +15,36 @@ const providerSelect = document.getElementById("quick-provider") as HTMLSelectEl
 const modelSelect = document.getElementById("quick-model") as HTMLSelectElement | null;
 const modelStatus = document.getElementById("quick-model-status");
 const estimateUrl = "/api/estimate";
+const modelPreferenceKey = "hulksar-food-ai-preference";
+type ModelPreference = { provider: "groq" | "gemini" | "openrouter"; model: string };
+const preferenceButton = document.getElementById("quick-model-save") as HTMLButtonElement | null;
+
+function readModelPreference(): ModelPreference | null {
+  try {
+    const value = JSON.parse(localStorage.getItem(modelPreferenceKey) || "null") as Partial<ModelPreference> | null;
+    if (!value || !["groq", "gemini", "openrouter"].includes(String(value.provider)) ||
+      typeof value.model !== "string" || !/^[a-zA-Z0-9._:/-]{1,200}$/.test(value.model)) return null;
+    return value as ModelPreference;
+  } catch {
+    return null;
+  }
+}
+
+let savedModelPreference = readModelPreference();
+
+function updatePreferenceButton(): void {
+  if (!preferenceButton || !providerSelect || !modelSelect) return;
+  const canSave = providerSelect.value !== "auto" && Boolean(modelSelect.value) && !modelSelect.disabled;
+  const isSaved = canSave && savedModelPreference?.provider === providerSelect.value &&
+    savedModelPreference.model === modelSelect.value;
+  preferenceButton.disabled = !canSave;
+  preferenceButton.textContent = isSaved ? "Preferred model saved" : "Save preference";
+  preferenceButton.setAttribute("aria-pressed", String(Boolean(isSaved)));
+}
+
+if (providerSelect && savedModelPreference) {
+  providerSelect.value = savedModelPreference.provider;
+}
 
 async function loadModels(): Promise<void> {
   if (!providerSelect || !modelSelect) return;
@@ -24,6 +54,7 @@ async function loadModels(): Promise<void> {
     modelSelect.add(new Option("Automatic fallback", ""));
     modelSelect.disabled = true;
     if (modelStatus) modelStatus.textContent = "Automatic fallback is enabled.";
+    updatePreferenceButton();
     return;
   }
 
@@ -40,11 +71,13 @@ async function loadModels(): Promise<void> {
     if (!provider?.configured) {
       modelSelect.add(new Option("API key not configured", ""));
       if (modelStatus) modelStatus.textContent = "Add this provider's API key in Vercel.";
+      updatePreferenceButton();
       return;
     }
     if (!provider.ok || !provider.models?.length) {
       modelSelect.add(new Option("Model list unavailable", ""));
       if (modelStatus) modelStatus.textContent = provider.message || "Could not retrieve this provider's models.";
+      updatePreferenceButton();
       return;
     }
 
@@ -54,15 +87,41 @@ async function loadModels(): Promise<void> {
       modelSelect.add(new Option(label, model.id));
     }
     modelSelect.disabled = false;
-    if (modelStatus) modelStatus.textContent = provider.modelCount.toLocaleString() + " models returned by " + selectedProvider + ".";
+    if (savedModelPreference?.provider === selectedProvider &&
+      provider.models.some((model) => model.id === savedModelPreference?.model)) {
+      modelSelect.value = savedModelPreference.model;
+      if (modelStatus) modelStatus.textContent = "Your preferred model was restored from this device.";
+    } else if (modelStatus) {
+      modelStatus.textContent = provider.modelCount.toLocaleString() + " models returned by " + selectedProvider + ".";
+    }
+    updatePreferenceButton();
   } catch {
     modelSelect.replaceChildren(new Option("Model list unavailable", ""));
     if (modelStatus) modelStatus.textContent = "Could not reach the model-list endpoint.";
+    updatePreferenceButton();
   }
 }
 
 if (providerSelect && modelSelect) {
-  providerSelect.addEventListener("change", () => void loadModels());
+  providerSelect.addEventListener("change", () => {
+    updatePreferenceButton();
+    void loadModels();
+  });
+  modelSelect.addEventListener("change", updatePreferenceButton);
+  preferenceButton?.addEventListener("click", () => {
+    const provider = providerSelect.value;
+    const model = modelSelect.value;
+    if (provider === "auto" || !model || modelSelect.disabled) return;
+    const preference: ModelPreference = { provider: provider as ModelPreference["provider"], model };
+    try {
+      localStorage.setItem(modelPreferenceKey, JSON.stringify(preference));
+      savedModelPreference = preference;
+      if (modelStatus) modelStatus.textContent = "Preferred model saved on this device.";
+      updatePreferenceButton();
+    } catch {
+      if (modelStatus) modelStatus.textContent = "Your browser could not save this preference. Check its storage settings.";
+    }
+  });
   const nativeFetch = window.fetch.bind(window);
   window.fetch = (async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
