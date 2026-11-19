@@ -2965,3 +2965,39 @@ html[data-theme="leveling"] button:focus-visible,html[data-theme="leveling"] inp
 .task-row.is-complete .task-row-title{color:#95898b;text-decoration:line-through}
 .task-row{gap:12px;min-height:54px}
 @media(max-width:480px){.task-check{width:36px;height:36px;min-width:36px;min-height:36px}.task-row-title{min-height:40px}}
+
+
+/* Theme-aware task editor and explicit delete confirmation. */
+.task-edit-dialog{width:min(460px,calc(100% - 28px));border-radius:18px}
+.task-edit-dialog::backdrop{background:rgba(18,12,14,.58);backdrop-filter:blur(5px)}
+.task-edit-dialog .dialog-form{padding:24px}
+.task-dialog-label{display:block;margin:2px 0 8px;color:var(--muted);font-size:12px;font-weight:750}
+.task-dialog-input{display:block;width:100%;min-height:48px;padding:0 13px;border:1px solid var(--line);border-radius:11px;background:var(--surface,#fff);color:var(--ink);font:600 16px Manrope,sans-serif;outline:none}
+.task-dialog-input:focus{border-color:#a96d77;box-shadow:0 0 0 3px rgba(169,109,119,.16)}
+.task-dialog-actions{align-items:center;flex-wrap:wrap;gap:9px}
+.task-dialog-actions button{min-height:42px}
+.task-delete-button{min-height:42px;padding:0 14px;border:1px solid #d8a0a5;border-radius:9px;background:#fff5f5;color:#a33f4b;font-size:12px;font-weight:800}
+.task-delete-button:hover{background:#ffe8ea}
+.task-dialog-actions .task-delete-button:first-child{margin-right:auto}
+.task-delete-confirm[hidden],.task-edit-dialog [hidden]{display:none!important}
+.task-delete-confirm .dialog-heading{margin-bottom:0}
+.task-delete-confirm .dialog-heading h2{color:var(--ink)}
+.task-delete-confirm-button{background:#a83f4d;color:#fff;border-color:#a83f4d}
+.task-delete-confirm-button:hover{background:#913441}
+.task-edit-dialog .dialog-close{width:36px;height:36px;font-size:25px}
+@media(max-width:480px){
+  .task-edit-dialog{width:calc(100% - 24px);max-height:calc(100dvh - 32px)}
+  .task-edit-dialog .dialog-form{padding:20px}
+  .task-dialog-actions{display:grid;grid-template-columns:1fr 1fr}
+  .task-dialog-actions .task-delete-button:first-child{grid-column:1/-1;margin:0}
+  .task-dialog-actions .primary-button,.task-dialog-actions .secondary-button{width:100%;min-width:0}
+}
+html[data-theme="dark"] .task-dialog-input{background:#101014;border-color:#383840;color:#f4f4f5}
+html[data-theme="dark"] .task-dialog-label{color:#c4b9bb}
+html[data-theme="dark"] .task-edit-dialog .dialog-subtitle{color:#aaa0a3}
+html[data-theme="dark"] .task-delete-button{background:#321b20;border-color:#70404a;color:#ffb8c0}
+html[data-theme="dark"] .task-delete-button:hover{background:#45232a}
+html[data-theme="leveling"] .task-dialog-input{background:#0b1224;border-color:var(--level-line);color:var(--level-text)}
+html[data-theme="leveling"] .task-dialog-label{color:var(--level-muted)}
+html[data-theme="leveling"] .task-delete-button{background:#301b32;border-color:#754b70;color:#ffc5df}
+html[data-theme="leveling"] .task-delete-button:hover{background:#412344}
