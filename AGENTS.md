@@ -46,6 +46,7 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Show chart axes and units. Distinguish a true zero from an unavailable/empty dataset. Avoid implying missing check-ins are failures.
 - Task completion denominator includes only tasks active on that date (created by that day and not archived before that day).
 - Charts must be responsive and keyboard/screen-reader understandable; provide a daily tabular breakdown.
+- Progress analytics must stay collapsed by default to preserve dashboard space, remember the user's expanded/collapsed choice locally, and show one selected chart/report at a time. Switching chart views must reuse the already-loaded analytics payload and must not trigger another API request.
 - Do not add a charting dependency unless the existing SVG/CSS implementation cannot meet the requirement.
 - Analytics must remain a view of existing records; never change food/task write APIs merely to support charts.
 
