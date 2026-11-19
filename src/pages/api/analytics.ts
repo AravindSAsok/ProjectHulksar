@@ -27,14 +27,18 @@ export const GET: APIRoute = async ({ request }) => {
     if (Date.parse(end) - Date.parse(start) > 731 * 24 * 60 * 60 * 1000) {
       return json({ error: "Choose a date range of two years or less." }, 400);
     }
-    const startDate = start.slice(0, 10);
-    const endDate = end.slice(0, 10);
+    const startDate = params.get("startDate");
+    const endDate = params.get("endDate");
+    const validDay = (value: string | null) => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z"));
+    if (!validDay(startDate) || !validDay(endDate) || startDate >= endDate) {
+      return json({ error: "Choose valid calendar dates." }, 400);
+    }
     const userId = auth.user.id;
     const [food, tasks, logs] = await Promise.all([
       db.collection("food_entries").find(
         { userId, eaten_at: { $gte: start, $lt: end } },
         { projection: { _id: 0, userId: 0 } }
-      ).sort({ eaten_at: 1 }).limit(10000).toArray(),
+      ).sort({ eaten_at: 1 }).limit(50000).toArray(),
       db.collection("daily_tasks").find(
         { userId, createdAt: { $lt: end } },
         { projection: { _id: 0, userId: 0 } }
@@ -42,7 +46,7 @@ export const GET: APIRoute = async ({ request }) => {
       db.collection("daily_task_logs").find(
         { userId, date: { $gte: startDate, $lt: endDate } },
         { projection: { _id: 0, userId: 0 } }
-      ).sort({ date: 1 }).limit(20000).toArray()
+      ).sort({ date: 1 }).limit(100000).toArray()
     ]);
     return json({ food, tasks, logs, range: { start, end } });
   } catch (error) {

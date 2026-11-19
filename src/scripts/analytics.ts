@@ -43,7 +43,6 @@ function makeDays(start: string, end: string, food: Food[], tasks: Task[], logs:
     if (!completed.has(log.date)) completed.set(log.date, new Set());
     completed.get(log.date)!.add(log.taskId);
   }
-  const taskById = new Map(tasks.map(task => [task.id, task]));
   for (let cursor = parseKey(start), last = parseKey(end); cursor <= last; cursor.setDate(cursor.getDate() + 1)) {
     const key = localKey(cursor);
     const entries = food.filter(item => localKey(new Date(item.eaten_at)) === key);
@@ -146,7 +145,10 @@ async function load() {
   const button = el<HTMLButtonElement>("analytics-refresh");
   button.disabled = true; feedback.textContent = "Loading your private progress data…";
   try {
-    const response = await fetch("/api/analytics?start=" + encodeURIComponent(isoLocalStart(startInput.value)) + "&end=" + encodeURIComponent(isoLocalEnd(endInput.value)), { credentials: "same-origin", cache: "no-store" });
+    const endDay = parseKey(endInput.value);
+    endDay.setDate(endDay.getDate() + 1);
+    const params = new URLSearchParams({ start: isoLocalStart(startInput.value), end: isoLocalEnd(endInput.value), startDate: startInput.value, endDate: localKey(endDay) });
+    const response = await fetch("/api/analytics?" + params.toString(), { credentials: "same-origin", cache: "no-store" });
     const payload = await response.json() as Payload;
     if (!response.ok) throw new Error(payload.error || "Could not load progress.");
     const days = makeDays(startInput.value, endInput.value, payload.food || [], payload.tasks || [], payload.logs || []);
