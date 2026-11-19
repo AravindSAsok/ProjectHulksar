@@ -1,62 +1,76 @@
 ---
 import "../styles/analytics.css";
 ---
-<section class="progress-analytics" id="progress-analytics" aria-labelledby="progress-title">
+<section class="progress-analytics is-collapsed" id="progress-analytics" aria-labelledby="progress-title">
   <div class="progress-heading">
     <div>
       <p class="card-kicker">YOUR BIGGER PICTURE</p>
       <h2 id="progress-title">Progress analytics</h2>
       <p>Explore your nutrition and daily habits over time. Your records stay separate, with a combined view when you need it.</p>
     </div>
-    <span class="progress-mark" aria-hidden="true">↗</span>
+    <button class="analytics-toggle" id="analytics-toggle" type="button" aria-expanded="false" aria-controls="analytics-content">
+      <span id="analytics-toggle-label">Show analytics</span>
+      <span class="analytics-toggle-icon" aria-hidden="true">⌄</span>
+    </button>
   </div>
-  <div class="analytics-controls">
-    <label>Period
-      <select id="analytics-period">
-        <option value="7d">Last 7 days</option>
-        <option value="30d" selected>Last 30 days</option>
-        <option value="month">This month</option>
-        <option value="year">This year</option>
-        <option value="custom">Custom range</option>
-      </select>
-    </label>
-    <label>From <input id="analytics-start" type="date" /></label>
-    <label>To <input id="analytics-end" type="date" /></label>
-    <label>Show
-      <select id="analytics-scope">
-        <option value="all">Food + tasks</option>
-        <option value="food">Food only</option>
-        <option value="tasks">Tasks only</option>
-      </select>
-    </label>
-    <button class="analytics-refresh" id="analytics-refresh" type="button">Update charts</button>
-  </div>
-  <p class="analytics-feedback" id="analytics-feedback" role="status" aria-live="polite">Loading your progress…</p>
-  <div class="analytics-stats" id="analytics-stats" aria-live="polite"></div>
-  <div class="analytics-chart-grid">
-    <article class="analytics-card analytics-trend-card">
-      <div class="analytics-card-heading"><div><p class="card-kicker">DAILY TREND</p><h3 id="analytics-trend-title">Calories over time</h3></div><span class="analytics-chart-note" id="analytics-trend-note">X: date · Y: kcal</span></div>
-      <div class="analytics-chart" id="analytics-trend" role="img" aria-label="Daily progress chart"></div>
-    </article>
-    <article class="analytics-card">
-      <div class="analytics-card-heading"><div><p class="card-kicker">NUTRITION MIX</p><h3>Calories by meal</h3></div></div>
-      <div class="analytics-donut-wrap" id="analytics-meals"></div>
-    </article>
-    <article class="analytics-card analytics-wide-card">
-      <div class="analytics-card-heading"><div><p class="card-kicker">HABIT CONSISTENCY</p><h3>Task completion by day</h3></div><span class="analytics-chart-note">X: date · Y: completion %</span></div>
-      <div class="analytics-chart" id="analytics-tasks" role="img" aria-label="Daily task completion chart"></div>
-    </article>
-  </div>
-  <div class="analytics-table-card">
-    <div class="analytics-card-heading"><div><p class="card-kicker">THE DETAILS</p><h3>Daily breakdown</h3></div><span class="analytics-chart-note" id="analytics-row-count"></span></div>
-    <div class="analytics-table-scroll">
-      <table class="analytics-table">
-        <thead><tr><th>Date</th><th>Food entries</th><th>Calories</th><th>Protein</th><th>Tasks done</th><th>Task rate</th></tr></thead>
-        <tbody id="analytics-rows"><tr><td colspan="6">Your daily data will appear here.</td></tr></tbody>
-      </table>
+  <div id="analytics-content" hidden>
+    <div class="analytics-controls">
+      <label>Period
+        <select id="analytics-period">
+          <option value="7d">Last 7 days</option>
+          <option value="30d" selected>Last 30 days</option>
+          <option value="month">This month</option>
+          <option value="year">This year</option>
+          <option value="custom">Custom range</option>
+        </select>
+      </label>
+      <label>From <input id="analytics-start" type="date" /></label>
+      <label>To <input id="analytics-end" type="date" /></label>
+      <label>Show
+        <select id="analytics-scope">
+          <option value="all">Food + tasks</option>
+          <option value="food">Food only</option>
+          <option value="tasks">Tasks only</option>
+        </select>
+      </label>
+      <button class="analytics-refresh" id="analytics-refresh" type="button">Update charts</button>
     </div>
+    <p class="analytics-feedback" id="analytics-feedback" role="status" aria-live="polite">Loading your progress…</p>
+    <div class="analytics-stats" id="analytics-stats" aria-live="polite"></div>
+    <div class="analytics-view-toolbar">
+      <label for="analytics-view">Explore one view</label>
+      <select id="analytics-view">
+        <option value="calories">Calories trend</option>
+        <option value="meals">Meal distribution</option>
+        <option value="tasks">Task consistency</option>
+        <option value="table">Daily breakdown</option>
+      </select>
+    </div>
+    <div class="analytics-chart-grid">
+      <article class="analytics-card analytics-trend-card" id="analytics-panel-calories">
+        <div class="analytics-card-heading"><div><p class="card-kicker">DAILY TREND</p><h3 id="analytics-trend-title">Calories over time</h3></div><span class="analytics-chart-note" id="analytics-trend-note">X: date · Y: kcal</span></div>
+        <div class="analytics-chart" id="analytics-trend" role="img" aria-label="Daily progress chart"></div>
+      </article>
+      <article class="analytics-card" id="analytics-panel-meals">
+        <div class="analytics-card-heading"><div><p class="card-kicker">NUTRITION MIX</p><h3>Calories by meal</h3></div></div>
+        <div class="analytics-donut-wrap" id="analytics-meals"></div>
+      </article>
+      <article class="analytics-card analytics-wide-card" id="analytics-panel-tasks">
+        <div class="analytics-card-heading"><div><p class="card-kicker">HABIT CONSISTENCY</p><h3>Task completion by day</h3></div><span class="analytics-chart-note">X: date · Y: completion %</span></div>
+        <div class="analytics-chart" id="analytics-tasks" role="img" aria-label="Daily task completion chart"></div>
+      </article>
+    </div>
+    <div class="analytics-table-card" id="analytics-panel-table" hidden>
+      <div class="analytics-card-heading"><div><p class="card-kicker">THE DETAILS</p><h3>Daily breakdown</h3></div><span class="analytics-chart-note" id="analytics-row-count"></span></div>
+      <div class="analytics-table-scroll">
+        <table class="analytics-table">
+          <thead><tr><th>Date</th><th>Food entries</th><th>Calories</th><th>Protein</th><th>Tasks done</th><th>Task rate</th></tr></thead>
+          <tbody id="analytics-rows"><tr><td colspan="6">Your daily data will appear here.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="analytics-disclaimer">Nutrition figures are estimates based on the foods you logged. Task completion is calculated only for tasks active on each date. Empty days are shown as zero, not missing records.</p>
   </div>
-  <p class="analytics-disclaimer">Nutrition figures are estimates based on the foods you logged. Task completion is calculated only for tasks active on each date. Empty days are shown as zero, not missing records.</p>
 </section>
 <script>
   import "../scripts/analytics";
