@@ -55,6 +55,31 @@
     <p class="task-analysis-note" id="task-analysis-note"></p>
   </section>
   <p class="task-feedback" id="task-feedback" role="status" aria-live="polite"></p>
+
+  <dialog class="app-dialog task-edit-dialog" id="task-edit-dialog" aria-labelledby="task-edit-heading">
+    <form class="dialog-form" id="task-edit-form">
+      <div class="dialog-heading">
+        <div><p class="card-kicker">YOUR DAILY ROUTINE</p><h2 id="task-edit-heading">Edit task</h2><p class="dialog-subtitle">Update the task name or remove it from future checklists.</p></div>
+        <button class="dialog-close" type="button" id="task-edit-close" aria-label="Close dialog">×</button>
+      </div>
+      <label class="task-dialog-label" for="task-edit-title">Task name</label>
+      <input class="task-dialog-input" id="task-edit-title" type="text" maxlength="100" required autocomplete="off" />
+      <div class="dialog-actions task-dialog-actions">
+        <button class="task-delete-button" type="button" id="task-delete-start">Delete task</button>
+        <button class="secondary-button" type="button" id="task-edit-cancel">Cancel</button>
+        <button class="primary-button" type="submit">Save</button>
+      </div>
+    </form>
+    <div class="dialog-form task-delete-confirm" id="task-delete-confirm" hidden>
+      <div class="dialog-heading">
+        <div><p class="card-kicker">REMOVE TASK</p><h2>Delete this task?</h2><p class="dialog-subtitle">“<span id="task-delete-name"></span>” will be removed from future checklists. Previous check-ins will stay in your history.</p></div>
+      </div>
+      <div class="dialog-actions task-dialog-actions">
+        <button class="secondary-button" type="button" id="task-delete-cancel">Keep task</button>
+        <button class="task-delete-button task-delete-confirm-button" type="button" id="task-delete-confirm-button">Delete task</button>
+      </div>
+    </div>
+  </dialog>
 </section>
 <script>
   import "../scripts/tasks";

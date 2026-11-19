@@ -57,3 +57,11 @@ Append-only record of meaningful implementation and operational changes.
 - Food add/edit/delete and calorie-goal changes now render from local-first state before awaiting background MongoDB sync. Existing local persistence and pending-add retry behavior are preserved; sync warnings use the same 2-second toast duration.
 - Updated AGENTS.md and legacy agent.md with the app-wide optimistic interaction, network warning, auth and index-initialization rules.
 - Verification: source-level patch review only in this GitHub-connected environment. npm run check, npm run build, automated tests, race-condition simulation, authenticated browser testing and production deployment verification remain pending.
+
+
+## 2026-11-19 — Themed task editing and reliable archive action
+- Replaced the browser-native `window.prompt` task editor (which exposed an unthemed Android/browser dialog and overloaded the word DELETE) with an accessible in-app dialog using Hulksar's shared dialog styling.
+- Added separate Save and Delete task actions, followed by an explicit in-app delete confirmation. Cancel/close leaves the task unchanged; successful deletion removes it from future checklists while preserving prior daily check-ins.
+- Kept task edits and deletes optimistic with rollback and the existing authenticated task API. No database schema, auth, dependency, or collection changes.
+- Hardened the DELETE endpoint to treat an already-archived task as a successful idempotent archive without overwriting its original archive timestamp; ownership remains scoped by the verified userId.
+- Verification: source-level review only in GitHub-connected environment. `npm run check`, `npm run build`, automated tests, authenticated browser testing, mobile-device testing, CI and deployment verification remain pending.

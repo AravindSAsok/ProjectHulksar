@@ -104,10 +104,16 @@ export const DELETE: APIRoute = async ({ request }) => {
   if (!id || id.length > 100) return json({ error: "Choose a valid task." }, 400);
   try {
     const { userId, db } = await context(request);
-    const result = await db.collection("daily_tasks").updateOne(
-      { userId, id, archivedAt: null }, { $set: { archivedAt: new Date().toISOString() } }
-    );
-    if (!result.matchedCount) return json({ error: "Task not found." }, 404);
+    const tasks = db.collection("daily_tasks");
+    const existing = await tasks.findOne({ userId, id }, { projection: { _id: 0, archivedAt: 1 } });
+    if (!existing) return json({ error: "Task not found." }, 404);
+    // Archive only once: keep the original archive date so historical checklists remain accurate.
+    if (!existing.archivedAt) {
+      await tasks.updateOne(
+        { userId, id, archivedAt: null },
+        { $set: { archivedAt: new Date().toISOString() } }
+      );
+    }
     return json({ archived: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not remove this task.";

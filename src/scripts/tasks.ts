@@ -20,6 +20,85 @@ const pendingTaskStates = new Map<string, boolean>();
 const syncingTaskStates = new Set<string>();
 const syncedTaskStates = new Map<string, boolean>();
 
+let editingTaskId: string | null = null;
+const taskEditDialog = $("task-edit-dialog") as HTMLDialogElement;
+const taskEditForm = $("task-edit-form") as HTMLFormElement;
+const taskEditInput = $("task-edit-title") as HTMLInputElement;
+const taskDeleteConfirm = $("task-delete-confirm");
+const taskDeleteName = $("task-delete-name");
+
+function openTaskEditor(task: Task) {
+  editingTaskId = task.id;
+  taskEditInput.value = task.title;
+  taskDeleteConfirm.hidden = true;
+  taskEditForm.hidden = false;
+  taskEditDialog.showModal();
+  requestAnimationFrame(() => taskEditInput.focus());
+}
+
+taskEditForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const task = tasks.find(item => item.id === editingTaskId);
+  const title = taskEditInput.value.trim();
+  if (!task || busy || !title || title.length > 100) return;
+  if (title === task.title) { taskEditDialog.close(); return; }
+  const previousTitle = task.title;
+  task.title = title;
+  render();
+  taskEditDialog.close();
+  busy = true;
+  try {
+    await api("/api/tasks", { method: "PATCH", body: JSON.stringify({ taskId: task.id, title }) });
+    feedback("Task updated.");
+  } catch {
+    task.title = previousTitle;
+    render();
+    showNetworkWarning();
+  } finally { busy = false; }
+});
+
+$("task-delete-start").addEventListener("click", () => {
+  const task = tasks.find(item => item.id === editingTaskId);
+  if (!task || busy) return;
+  taskDeleteName.textContent = task.title;
+  taskEditForm.hidden = true;
+  taskDeleteConfirm.hidden = false;
+  $("task-delete-cancel").focus();
+});
+
+$("task-delete-cancel").addEventListener("click", () => {
+  taskDeleteConfirm.hidden = true;
+  taskEditForm.hidden = false;
+  taskEditInput.focus();
+});
+
+$("task-delete-confirm-button").addEventListener("click", async () => {
+  const task = tasks.find(item => item.id === editingTaskId);
+  if (!task || busy) return;
+  const previousArchivedAt = task.archivedAt;
+  task.archivedAt = new Date().toISOString();
+  render();
+  taskEditDialog.close();
+  busy = true;
+  try {
+    await api("/api/tasks?id=" + encodeURIComponent(task.id), { method: "DELETE" });
+    feedback("Task removed. Its previous history is preserved.");
+  } catch {
+    task.archivedAt = previousArchivedAt;
+    render();
+    showNetworkWarning();
+  } finally { busy = false; }
+});
+
+$("task-edit-close").addEventListener("click", () => taskEditDialog.close());
+$("task-edit-cancel").addEventListener("click", () => taskEditDialog.close());
+
+taskEditDialog.addEventListener("close", () => {
+  editingTaskId = null;
+  taskDeleteConfirm.hidden = true;
+  taskEditForm.hidden = false;
+});
+
 function feedback(message: string, error = false) {
   const el = $("task-feedback");
   el.textContent = message;
@@ -219,30 +298,7 @@ $("task-list").addEventListener("click", async event => {
   } else if (edit) {
     const task = tasks.find(item => item.id === edit.dataset.taskEdit);
     if (!task || busy) return;
-    const choice = window.prompt("Edit task name, or type DELETE to remove it:", task.title);
-    if (choice === null) return;
-    const previousTitle = task.title;
-    const previousArchivedAt = task.archivedAt;
-    const deleting = choice.trim().toUpperCase() === "DELETE";
-    if (!deleting && !choice.trim()) return;
-    if (deleting) task.archivedAt = new Date().toISOString();
-    else task.title = choice.trim();
-    render();
-    busy = true;
-    try {
-      if (deleting) {
-        await api("/api/tasks?id=" + encodeURIComponent(task.id), { method: "DELETE" });
-        feedback("Task removed. Its previous history is preserved.");
-      } else {
-        await api("/api/tasks", { method: "PATCH", body: JSON.stringify({ taskId: task.id, title: task.title }) });
-        feedback("Task updated.");
-      }
-    } catch {
-      task.title = previousTitle;
-      task.archivedAt = previousArchivedAt;
-      render();
-      showNetworkWarning();
-    } finally { busy = false; }
+    openTaskEditor(task);
   }
 });
 $("task-calendar-grid").addEventListener("click", event => {
