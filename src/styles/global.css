@@ -2813,3 +2813,145 @@ html[data-theme="leveling"] .hulkie-welcome .hulkie-wave{background:#202c50;colo
 html[data-theme="leveling"] .toast{background:#26305d;border-color:#6f6be0;}
 html[data-theme="leveling"] button:focus-visible,html[data-theme="leveling"] input:focus-visible,html[data-theme="leveling"] textarea:focus-visible,html[data-theme="leveling"] select:focus-visible,html[data-theme="leveling"] a:focus-visible{outline-color:rgba(89,215,255,.6);}
 @media(prefers-reduced-motion:no-preference){html[data-theme="leveling"] .calorie-card{box-shadow:0 12px 45px rgba(90,100,255,.12);}html[data-theme="leveling"] .theme-toggle{transition:box-shadow .25s,border-color .25s;}html[data-theme="leveling"] .theme-toggle:hover{box-shadow:0 0 22px rgba(89,215,255,.2);}}
+
+
+/* Quick food log layout repair and saved model preference control. */
+.quick-form-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.quick-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+}
+
+.quick-controls > .control-label {
+  min-width: 0;
+}
+
+.quick-controls .control-label select,
+.quick-controls .control-label input {
+  width: 100%;
+  min-width: 0;
+}
+
+.model-preference-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.model-status {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.model-preference-button {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  background: #202027;
+  color: #d4d4d8;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.model-preference-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.quick-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  justify-content: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.quick-buttons button {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 8px;
+  white-space: nowrap;
+}
+
+.main-column,
+.quick-add-card,
+.side-column,
+.diary-section,
+.diary-heading > div {
+  min-width: 0;
+}
+
+.diary-heading,
+.diary-heading .card-kicker {
+  overflow: visible;
+}
+
+.page-footer > span:first-child > span {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+@media (max-width: 980px) {
+  .quick-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .quick-buttons {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .quick-buttons button {
+    min-height: 40px;
+    padding-inline: 5px;
+    white-space: normal;
+    font-size: 9px;
+  }
+
+  .model-preference-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .quick-buttons button {
+    font-size: 8px;
+  }
+
+  .model-preference-button {
+    font-size: 8px;
+    padding-inline: 7px;
+  }
+}
