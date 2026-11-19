@@ -40,3 +40,11 @@ Append-only record of meaningful implementation and operational changes.
 - Kept Gemini 3.6 Flash as the default because it is available in the current API key's model catalogue and is documented as free on the Gemini API Standard tier. The existing Vercel `GEMINI_MODEL` already points to it.
 - Set Gemini as the initial provider for Quick food log and Hulkie; explicit saved food-log model preferences still take precedence. The model dropdown now labels the server-configured default clearly.
 - Verification limitation: live model catalogue connectivity was checked for Gemini and Groq, but per-model generation benchmarks could not be run from the available browser runner (runner wallet unavailable) and the Vercel secret API did not return decrypted values for safe direct testing. Do not describe individual generation models as benchmark-passed.
+
+
+## 2026-11-19 — Easier one-click task completion
+- Root cause: the task title was a non-interactive span, so only the small 23px checkbox could toggle completion.
+- Made the task title its own accessible button using the same existing `data-task-toggle` action as the checkbox. Clicking either target now toggles the same date-specific completion state once; clicking the task edit control still only opens edit/delete.
+- Increased the checkbox hit area to 32px (36px on narrow screens), gave the title a comfortable minimum height, visible keyboard focus, and touch-friendly interaction. Existing single-click PATCH behavior and the current busy guard remain in place to prevent duplicate requests while a save is in flight.
+- No API, MongoDB, auth, schema, or dependency changes. The existing authenticated PATCH still writes only the selected task/date completion.
+- Verification: source review; automated check/build and authenticated mouse/touch testing pending deployment.

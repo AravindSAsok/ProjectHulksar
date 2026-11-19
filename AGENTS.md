@@ -33,7 +33,7 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Manual, AI text and photo food entry; review-before-save; edit/delete; meal assignment; food history filters and pagination.
 - Calorie goal, macro totals, daily meal breakdown, seven-day consistency, local fallback and MongoDB sync.
 - Supabase email/password and anonymous auth/session behavior.
-- Task creation, rename/archive, date-specific check-ins, monthly calendar and historical logs.
+- Task creation, rename/archive, date-specific check-ins, monthly calendar and historical logs. Both the checkbox and task title must toggle completion with one click/tap; preserve native button keyboard accessibility and provide a comfortable mobile hit target.
 - Hulkie popup, chat history, provider/model choice, fallback and authenticated requests.
 - Responsive dark/light/leveling themes, keyboard accessibility and mobile-friendly dialogs.
 

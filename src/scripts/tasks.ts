@@ -63,8 +63,8 @@ function renderDaily() {
   $("task-list").innerHTML = due.length ? due.map(task => {
     const checked = !!status.get(task.id);
     return `<div class="task-row ${checked ? "is-complete" : ""}" data-task-row="${esc(task.id)}">
-      <button class="task-check ${checked ? "checked" : ""}" type="button" data-task-toggle="${esc(task.id)}" aria-label="${checked ? "Mark incomplete" : "Mark complete"}" aria-pressed="${checked}">${checked ? "✓" : ""}</button>
-      <span class="task-row-title">${esc(task.title)}</span>
+      <button class="task-check ${checked ? "checked" : ""}" type="button" data-task-toggle="${esc(task.id)}" aria-label="${checked ? "Mark incomplete" : "Mark complete"}: ${esc(task.title)}" aria-pressed="${checked}">${checked ? "✓" : ""}</button>
+      <button class="task-row-title" type="button" data-task-toggle="${esc(task.id)}" aria-label="${checked ? "Mark incomplete" : "Mark complete"}: ${esc(task.title)}" aria-pressed="${checked}">${esc(task.title)}</button>
       <button class="task-edit" type="button" data-task-edit="${esc(task.id)}" aria-label="Edit task">···</button>
     </div>`;
   }).join("") : '<p class="task-empty">Nothing on your list yet. Add one small thing you want to show up for.</p>';
