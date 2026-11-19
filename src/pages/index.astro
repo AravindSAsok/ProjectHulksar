@@ -210,7 +210,10 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
                       <option value="">Automatic fallback</option>
                     </select>
                   </label>
-                  <span class="model-status" id="quick-model-status" aria-live="polite">Automatic fallback is enabled.</span>
+                  <div class="model-preference-row">
+                    <span class="model-status" id="quick-model-status" aria-live="polite">Automatic fallback is enabled.</span>
+                    <button class="model-preference-button" id="quick-model-save" type="button" disabled>Save preference</button>
+                  </div>
                 </div>
                 <div class="quick-buttons">
                   <input id="food-photo-input" type="file" accept="image/*" hidden />
