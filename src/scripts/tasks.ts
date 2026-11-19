@@ -15,16 +15,31 @@ let logs: TaskLog[] = [];
 let month = monthKey(new Date());
 let selectedDate = dayKey(new Date());
 let busy = false;
+let feedbackTimer: number | undefined;
+const pendingTaskStates = new Map<string, boolean>();
+const syncingTaskStates = new Set<string>();
+const syncedTaskStates = new Map<string, boolean>();
 
 function feedback(message: string, error = false) {
   const el = $("task-feedback");
   el.textContent = message;
   el.classList.toggle("is-error", error);
 }
+function showNetworkWarning() {
+  const toast = document.getElementById("toast");
+  if (toast) {
+    toast.textContent = "Unstable network, some data may not be synced";
+    toast.className = "toast visible toast-error";
+    window.clearTimeout(feedbackTimer);
+    feedbackTimer = window.setTimeout(() => { toast.className = "toast"; }, 2000);
+  } else {
+    feedback("Unstable network, some data may not be synced", true);
+    window.clearTimeout(feedbackTimer);
+    feedbackTimer = window.setTimeout(() => feedback(""), 2000);
+  }
+}
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const sessionResponse = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
-  const session = await sessionResponse.json().catch(() => ({})) as { user?: { id?: string } | null };
-  if (!sessionResponse.ok || !session.user?.id) throw new Error("Sign in to use Daily Tasks.");
+  // The protected API authenticates every request; avoid a duplicate session round trip.
   const response = await fetch(path, {
     ...init,
     credentials: "same-origin",
@@ -135,49 +150,99 @@ async function loadMonth() {
   finally { busy = false; }
 }
 async function refresh() { await loadMonth(); }
+async function syncTaskState(taskId: string, date: string, key: string): Promise<void> {
+  if (syncingTaskStates.has(key)) return;
+  syncingTaskStates.add(key);
+  try {
+    while (pendingTaskStates.has(key)) {
+      const desired = pendingTaskStates.get(key)!;
+      pendingTaskStates.delete(key);
+      try {
+        await api("/api/tasks", { method: "PATCH", body: JSON.stringify({ taskId, date, completed: desired }) });
+        syncedTaskStates.set(key, desired);
+      } catch (error) {
+        if (pendingTaskStates.has(key)) continue;
+        throw error;
+      }
+    }
+  } catch {
+    const rollback = syncedTaskStates.get(key) || false;
+    const index = logs.findIndex(log => log.taskId === taskId && log.date === date);
+    if (index >= 0) logs[index].completed = rollback;
+    else if (rollback) logs.push({ taskId, date, completed: true });
+    pendingTaskStates.delete(key);
+    render();
+    showNetworkWarning();
+  } finally {
+    syncingTaskStates.delete(key);
+  }
+}
 $("task-add-form").addEventListener("submit", async event => {
   event.preventDefault();
   const input = $("task-title-input") as HTMLInputElement, title = input.value.trim();
   if (!title || busy) return;
   busy = true;
+  const temporaryId = "pending-" + crypto.randomUUID();
+  const optimisticTask: Task = { id: temporaryId, title, createdAt: new Date().toISOString(), archivedAt: null };
+  tasks.push(optimisticTask);
+  input.value = "";
+  month = monthKey(new Date()); selectedDate = dayKey(new Date());
+  render();
   try {
-    await api("/api/tasks", { method: "POST", body: JSON.stringify({ title }) });
-    input.value = ""; month = monthKey(new Date()); selectedDate = dayKey(new Date()); await refresh(); feedback("Task added to your daily list.");
-  } catch (error) { feedback(error instanceof Error ? error.message : "Could not add task.", true); }
-  finally { busy = false; }
+    const result = await api<{ task: Task }>("/api/tasks", { method: "POST", body: JSON.stringify({ title }) });
+    tasks = tasks.map(task => task.id === temporaryId ? result.task : task);
+    render();
+    feedback("Task added to your daily list.");
+  } catch {
+    tasks = tasks.filter(task => task.id !== temporaryId);
+    render();
+    showNetworkWarning();
+  } finally { busy = false; }
 });
 $("task-list").addEventListener("click", async event => {
   const target = event.target as HTMLElement;
   const toggle = target.closest<HTMLElement>("[data-task-toggle]");
   const edit = target.closest<HTMLElement>("[data-task-edit]");
-  if (toggle && !busy) {
+  if (toggle) {
     const taskId = toggle.dataset.taskToggle!;
-    const current = logsFor(selectedDate).get(taskId) || false;
-    busy = true;
-    try {
-      await api("/api/tasks", { method: "PATCH", body: JSON.stringify({ taskId, date: selectedDate, completed: !current }) });
-      const existing = logs.findIndex(log => log.taskId === taskId && log.date === selectedDate);
-      if (existing >= 0) logs[existing].completed = !current; else logs.push({ taskId, date: selectedDate, completed: !current });
-      render();
-    } catch (error) { feedback(error instanceof Error ? error.message : "Could not update task.", true); }
-    finally { busy = false; }
+    const date = selectedDate;
+    const key = taskId + "|" + date;
+    const current = logsFor(date).get(taskId) || false;
+    const next = !current;
+    if (!syncedTaskStates.has(key)) syncedTaskStates.set(key, current);
+    const existing = logs.findIndex(log => log.taskId === taskId && log.date === date);
+    if (existing >= 0) logs[existing].completed = next;
+    else logs.push({ taskId, date, completed: next });
+    pendingTaskStates.set(key, next);
+    render();
+    void syncTaskState(taskId, date, key);
   } else if (edit) {
     const task = tasks.find(item => item.id === edit.dataset.taskEdit);
     if (!task || busy) return;
     const choice = window.prompt("Edit task name, or type DELETE to remove it:", task.title);
     if (choice === null) return;
+    const previousTitle = task.title;
+    const previousArchivedAt = task.archivedAt;
+    const deleting = choice.trim().toUpperCase() === "DELETE";
+    if (!deleting && !choice.trim()) return;
+    if (deleting) task.archivedAt = new Date().toISOString();
+    else task.title = choice.trim();
+    render();
     busy = true;
     try {
-      if (choice.trim().toUpperCase() === "DELETE") {
+      if (deleting) {
         await api("/api/tasks?id=" + encodeURIComponent(task.id), { method: "DELETE" });
         feedback("Task removed. Its previous history is preserved.");
-      } else if (choice.trim()) {
-        await api("/api/tasks", { method: "PATCH", body: JSON.stringify({ taskId: task.id, title: choice.trim() }) });
+      } else {
+        await api("/api/tasks", { method: "PATCH", body: JSON.stringify({ taskId: task.id, title: task.title }) });
         feedback("Task updated.");
-      } else { return; }
-      await refresh();
-    } catch (error) { feedback(error instanceof Error ? error.message : "Could not update task.", true); }
-    finally { busy = false; }
+      }
+    } catch {
+      task.title = previousTitle;
+      task.archivedAt = previousArchivedAt;
+      render();
+      showNetworkWarning();
+    } finally { busy = false; }
   }
 });
 $("task-calendar-grid").addEventListener("click", event => {

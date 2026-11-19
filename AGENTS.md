@@ -50,6 +50,15 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Do not add a charting dependency unless the existing SVG/CSS implementation cannot meet the requirement.
 - Analytics must remain a view of existing records; never change food/task write APIs merely to support charts.
 
+
+## Responsive and optimistic interaction contract
+- Every user-facing action button must respond to the tap immediately. For data mutations (task completion, task add/edit/archive, food add/edit/delete, calorie-goal changes), update the visible UI from local state first, then synchronize with the authenticated API/MongoDB in the background. Never make the user wait for the network before showing the intended state.
+- Keep non-mutating controls (navigation, opening/closing dialogs, theme/view switches) immediate and local; do not add unnecessary API calls or disable unrelated controls while a mutation is syncing.
+- Permit repeated taps on task completion: one tap marks done, the next tap marks not done. Serialize/coalesce per-task/date writes so the last tap wins without duplicate or out-of-order writes. Do not use a page-wide busy flag to block task toggles.
+- If cloud synchronization fails, retain the local-first state where the existing storage contract supports it and show exactly: “Unstable network, some data may not be synced” for 2 seconds. Do not claim cloud sync succeeded. Preserve existing auth and user-scoped MongoDB API checks; never bypass server authentication.
+- Avoid redundant client-side session round trips before protected API calls; let the API perform its existing authoritative authentication check. Cache one-time MongoDB index initialization per warm server instance rather than calling createIndex on every request.
+- Keep feedback accessible (role=status/aria-live), touch targets comfortable, and keyboard activation functional. Do not optimistically discard data on a failed mutation without a clear rollback or local-save behavior.
+
 ## Development workflow
 1. Read this file, \`README.md\`, the latest relevant docs, and the source files being changed.
 2. Inspect current branch, latest commit, working tree and open PRs. Work on a feature branch unless the user explicitly requests a direct main push.

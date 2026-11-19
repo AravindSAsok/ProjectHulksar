@@ -15,15 +15,20 @@ const validDate = (value: unknown): value is string =>
   new Date(value + "T00:00:00Z").toISOString().slice(0, 10) === value;
 const validMonth = (value: string | null): value is string => !!value && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 
+let taskIndexesReady: Promise<void> | undefined;
 async function context(request: Request) {
   const auth = await authenticateRequest(request);
   const db = await getMongoDb();
-  await Promise.all([
+  taskIndexesReady ??= Promise.all([
     db.collection("daily_tasks").createIndex({ userId: 1, id: 1 }, { unique: true, name: "user_task_unique" }),
     db.collection("daily_tasks").createIndex({ userId: 1, createdAt: 1 }, { name: "user_tasks_created" }),
     db.collection("daily_task_logs").createIndex({ userId: 1, taskId: 1, date: 1 }, { unique: true, name: "user_task_day_unique" }),
     db.collection("daily_task_logs").createIndex({ userId: 1, date: 1 }, { name: "user_task_history" })
-  ]);
+  ]).then(() => undefined).catch(error => {
+    taskIndexesReady = undefined;
+    throw error;
+  });
+  await taskIndexesReady;
   return { userId: auth.user.id, db };
 }
 function validTaskTitle(value: unknown): value is string {

@@ -125,7 +125,7 @@ function showToast(message: string, kind: "success" | "error" = "success"): void
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => {
     toastElement.className = "toast";
-  }, 3600);
+  }, 2000);
 }
 
 function openDialog(dialog: HTMLDialogElement): void {
@@ -444,20 +444,22 @@ async function saveManualEntry(event: SubmitEvent): Promise<void> {
     source: existing?.source ?? "manual"
   };
 
-  try {
-    const warning = existing ? await updateEntry(entry) : await addEntry(entry);
-    if (existing) entries = entries.map((current) => current.id === entry.id ? entry : current);
-    else entries.unshift(entry);
-    render();
-    closeDialog("entry-dialog");
-    if (!existing) {
-      quickTime.value = dateTimeLocalValue();
-      quickTimeManuallySet = false;
-    }
-    showToast(warning ?? (existing ? "Food entry updated." : "Food added to your diary."), warning ? "error" : "success");
-  } catch (error) {
-    showToast(error instanceof Error ? error.message : "Could not save this food.", "error");
+  if (existing) entries = entries.map((current) => current.id === entry.id ? entry : current);
+  else entries.unshift(entry);
+  render();
+  closeDialog("entry-dialog");
+  if (!existing) {
+    quickTime.value = dateTimeLocalValue();
+    quickTimeManuallySet = false;
   }
+  void (async () => {
+    try {
+      const warning = existing ? await updateEntry(entry) : await addEntry(entry);
+      showToast(warning ? "Unstable network, some data may not be synced" : (existing ? "Food entry updated." : "Food added to your diary."), warning ? "error" : "success");
+    } catch {
+      showToast("Unstable network, some data may not be synced", "error");
+    }
+  })();
 }
 
 function renderReviewItems(items: DraftItem[]): void {
@@ -809,12 +811,6 @@ async function saveReview(event: SubmitEvent): Promise<void> {
       source: "ai"
     }));
 
-    const warnings: string[] = [];
-    for (const entry of created) {
-      const warning = await addEntry(entry);
-      if (warning) warnings.push(warning);
-    }
-
     entries = [...created, ...entries];
     render();
     closeDialog("review-dialog");
@@ -822,7 +818,10 @@ async function saveReview(event: SubmitEvent): Promise<void> {
     quickTime.value = dateTimeLocalValue();
     quickTimeManuallySet = false;
     quickMeal.value = byId<HTMLSelectElement>("review-meal").value;
-    showToast(warnings[0] ?? `${created.length} ${created.length === 1 ? "food" : "foods"} added to your diary.`, warnings.length ? "error" : "success");
+    void Promise.all(created.map((entry) => addEntry(entry))).then((warnings) => {
+      const warning = warnings.find(Boolean);
+      showToast(warning ? "Unstable network, some data may not be synced" : `${created.length} ${created.length === 1 ? "food" : "foods"} added to your diary.`, warning ? "error" : "success");
+    }).catch(() => showToast("Unstable network, some data may not be synced", "error"));
   } catch (error) {
     showToast(error instanceof Error ? error.message : "Could not save the estimate.", "error");
   } finally {
@@ -838,14 +837,12 @@ async function removeFood(id: string): Promise<void> {
   if (!entry) return;
   if (!window.confirm(`Delete "${entry.name}" from your diary?`)) return;
 
-  try {
-    const warning = await deleteEntry(id);
-    entries = entries.filter((item) => item.id !== id);
-    render();
-    showToast(warning ?? "Food entry deleted.", warning ? "error" : "success");
-  } catch (error) {
-    showToast(error instanceof Error ? error.message : "Could not delete this food.", "error");
-  }
+  entries = entries.filter((item) => item.id !== id);
+  historyEntries = historyEntries.filter((item) => item.id !== id);
+  render();
+  void deleteEntry(id).then((warning) => {
+    showToast(warning ? "Unstable network, some data may not be synced" : "Food entry deleted.", warning ? "error" : "success");
+  }).catch(() => showToast("Unstable network, some data may not be synced", "error"));
 }
 
 function openGoalDialog(): void {
@@ -862,15 +859,12 @@ async function saveGoal(event: SubmitEvent): Promise<void> {
     return;
   }
 
-  try {
-    const warning = await persistGoal(goal);
-    calorieGoal = goal;
-    render();
-    closeDialog("goal-dialog");
-    showToast(warning ?? "Daily calorie goal updated.", warning ? "error" : "success");
-  } catch (error) {
-    showToast(error instanceof Error ? error.message : "Could not save your goal.", "error");
-  }
+  calorieGoal = goal;
+  render();
+  closeDialog("goal-dialog");
+  void persistGoal(goal).then((warning) => {
+    showToast(warning ? "Unstable network, some data may not be synced" : "Daily calorie goal updated.", warning ? "error" : "success");
+  }).catch(() => showToast("Unstable network, some data may not be synced", "error"));
 }
 
 function bindEvents(): void {
@@ -1003,7 +997,7 @@ async function initialize(): Promise<void> {
     entries = data.entries;
     calorieGoal = data.goal;
     render();
-    if (data.message) showToast(data.message, "error");
+    if (data.message) showToast("Unstable network, some data may not be synced", "error");
   } catch (error) {
     render();
     showToast(error instanceof Error ? error.message : "Your diary could not be loaded.", "error");

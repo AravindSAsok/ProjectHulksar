@@ -48,3 +48,12 @@ Append-only record of meaningful implementation and operational changes.
 - Increased the checkbox hit area to 32px (36px on narrow screens), gave the title a comfortable minimum height, visible keyboard focus, and touch-friendly interaction. Existing single-click PATCH behavior and the current busy guard remain in place to prevent duplicate requests while a save is in flight.
 - No API, MongoDB, auth, schema, or dependency changes. The existing authenticated PATCH still writes only the selected task/date completion.
 - Verification: source review; automated check/build and authenticated mouse/touch testing pending deployment.
+
+
+## 2026-11-19 — Instant optimistic actions and task-sync latency
+- Task completion now updates the checklist, progress, calendar and streak immediately on the first tap; a second tap immediately reverses it. Per-task/date writes are serialized/coalesced so the latest tap wins. Failed sync rolls back to the last confirmed state and shows “Unstable network, some data may not be synced” for 2 seconds.
+- Removed the redundant browser-side /api/auth/me request before task API calls. The protected task endpoint continues to perform authoritative authentication and user-scoped MongoDB access.
+- Task MongoDB indexes are now initialized once per warm server instance rather than issuing four createIndex calls on every task request. Existing indexes and query filters are unchanged.
+- Food add/edit/delete and calorie-goal changes now render from local-first state before awaiting background MongoDB sync. Existing local persistence and pending-add retry behavior are preserved; sync warnings use the same 2-second toast duration.
+- Updated AGENTS.md and legacy agent.md with the app-wide optimistic interaction, network warning, auth and index-initialization rules.
+- Verification: source-level patch review only in this GitHub-connected environment. npm run check, npm run build, automated tests, race-condition simulation, authenticated browser testing and production deployment verification remain pending.
