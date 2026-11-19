@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ request }) => {
     const startDate = params.get("startDate");
     const endDate = params.get("endDate");
     const validDay = (value: string | null) => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z"));
-    if (!validDay(startDate) || !validDay(endDate) || startDate >= endDate) {
+    if (!startDate || !endDate || !validDay(startDate) || !validDay(endDate) || startDate >= endDate) {
       return json({ error: "Choose valid calendar dates." }, 400);
     }
     const userId = auth.user.id;

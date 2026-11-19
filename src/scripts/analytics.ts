@@ -13,7 +13,6 @@ const feedback = el<HTMLParagraphElement>("analytics-feedback");
 const fmt = (n: number) => Math.round(n).toLocaleString("en-IN");
 const localKey = (date: Date) => date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
 const parseKey = (key: string) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, Number(key.slice(8, 10)));
-const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c);
 function rangeFor(value: string) {
   const today = new Date();
   const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
