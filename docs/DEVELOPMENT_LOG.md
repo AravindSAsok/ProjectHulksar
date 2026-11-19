@@ -77,3 +77,15 @@ Append-only record of meaningful implementation and operational changes.
 - Verification: reviewed the current repository guidance and checked the updated instruction text for conflicting branch/PR rules. Application tests/build are not applicable to this documentation-only change.
 - Commit/deployment: pending commit and push to `main`; deployment not applicable.
 - Remaining risks: GitHub branch protection may still require an approved PR; agents must not bypass repository protections.
+
+
+## 2026-11-19 — Fix task deletion visibility and action blocking
+- Investigated the complete task editor → confirmation → DELETE API → MongoDB archive flow on main. The UI uses soft deletion to preserve historical check-ins.
+- Identified two concrete client-side weaknesses: task visibility compared UTC date slices against local calendar dates (which can leave a just-archived task visible around local midnight), and the shared global busy flag blocked task editor/delete actions while unrelated task requests were pending. A pending optimistic task was also rendered with an active edit affordance before it had a server ID.
+- Task visibility and analytics now compare task timestamps using the user's local calendar date. Task editor/delete requests use a dialog-specific pending guard, unrelated task creation/check-in requests no longer block existing task actions, and unsaved temporary tasks have edit disabled until creation is confirmed.
+- Hardened the MongoDB archive filter to handle legacy null/missing/empty archive fields, check matchedCount and confirm an already-archived state before reporting success. All queries remain scoped by the authenticated userId; no physical deletion or historical log deletion occurs.
+- Delete failures now show the actual API error; only network-level failures show the standard 2-second unstable-network warning.
+- Changed files: src/scripts/tasks.ts, src/pages/api/tasks.ts, AGENTS.md, agent.md, docs/DEVELOPMENT_LOG.md.
+- Verification: source-level patch review. npm run check, npm run build, automated API tests, authenticated browser/mobile testing and Vercel production verification remain pending.
+- Commit/deployment: pending.
+- Remaining risks: no access to the complaining user's authenticated browser session or task document, so the exact production failure has not been reproduced against that account. The fixes address the identified code-path defects and harden archive behavior.

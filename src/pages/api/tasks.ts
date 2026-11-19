@@ -108,11 +108,16 @@ export const DELETE: APIRoute = async ({ request }) => {
     const existing = await tasks.findOne({ userId, id }, { projection: { _id: 0, archivedAt: 1 } });
     if (!existing) return json({ error: "Task not found." }, 404);
     // Archive only once: keep the original archive date so historical checklists remain accurate.
+    // Older task documents may have a missing or empty archivedAt field.
     if (!existing.archivedAt) {
-      await tasks.updateOne(
-        { userId, id, archivedAt: null },
+      const result = await tasks.updateOne(
+        { userId, id, $or: [{ archivedAt: null }, { archivedAt: "" }] },
         { $set: { archivedAt: new Date().toISOString() } }
       );
+      if (result.matchedCount === 0) {
+        const latest = await tasks.findOne({ userId, id }, { projection: { _id: 0, archivedAt: 1 } });
+        if (!latest?.archivedAt) return json({ error: "Could not archive this task. Please try again." }, 409);
+      }
     }
     return json({ archived: true });
   } catch (error) {

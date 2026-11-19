@@ -5,6 +5,7 @@ type TaskLog = { taskId: string; date: string; completed: boolean };
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const monthKey = (date: Date) => date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
 const dayKey = (date: Date) => monthKey(date) + "-" + String(date.getDate()).padStart(2, "0");
+const localDayKey = (timestamp: string) => dayKey(new Date(timestamp));
 const dateFromKey = (key: string) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, Number(key.slice(8, 10)));
 const esc = (value: string) => value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] || c);
 const formatDate = (key: string, options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "long" }) =>
@@ -15,6 +16,7 @@ let logs: TaskLog[] = [];
 let month = monthKey(new Date());
 let selectedDate = dayKey(new Date());
 let busy = false;
+let taskActionPending = false;
 let feedbackTimer: number | undefined;
 const pendingTaskStates = new Map<string, boolean>();
 const syncingTaskStates = new Set<string>();
@@ -40,13 +42,13 @@ taskEditForm.addEventListener("submit", async event => {
   event.preventDefault();
   const task = tasks.find(item => item.id === editingTaskId);
   const title = taskEditInput.value.trim();
-  if (!task || busy || !title || title.length > 100) return;
+  if (!task || taskActionPending || !title || title.length > 100) return;
   if (title === task.title) { taskEditDialog.close(); return; }
   const previousTitle = task.title;
   task.title = title;
   render();
   taskEditDialog.close();
-  busy = true;
+  taskActionPending = true;
   try {
     await api("/api/tasks", { method: "PATCH", body: JSON.stringify({ taskId: task.id, title }) });
     feedback("Task updated.");
@@ -54,12 +56,12 @@ taskEditForm.addEventListener("submit", async event => {
     task.title = previousTitle;
     render();
     showNetworkWarning();
-  } finally { busy = false; }
+  } finally { taskActionPending = false; }
 });
 
 $("task-delete-start").addEventListener("click", () => {
   const task = tasks.find(item => item.id === editingTaskId);
-  if (!task || busy) return;
+  if (!task || taskActionPending) return;
   taskDeleteName.textContent = task.title;
   taskEditForm.hidden = true;
   taskDeleteConfirm.hidden = false;
@@ -74,20 +76,21 @@ $("task-delete-cancel").addEventListener("click", () => {
 
 $("task-delete-confirm-button").addEventListener("click", async () => {
   const task = tasks.find(item => item.id === editingTaskId);
-  if (!task || busy) return;
+  if (!task || taskActionPending || task.id.startsWith("pending-")) return;
   const previousArchivedAt = task.archivedAt;
   task.archivedAt = new Date().toISOString();
   render();
   taskEditDialog.close();
-  busy = true;
+  taskActionPending = true;
   try {
     await api("/api/tasks?id=" + encodeURIComponent(task.id), { method: "DELETE" });
-    feedback("Task removed. Its previous history is preserved.");
-  } catch {
+    feedback("Task removed from future checklists. Previous check-ins are preserved.");
+  } catch (error) {
     task.archivedAt = previousArchivedAt;
     render();
-    showNetworkWarning();
-  } finally { busy = false; }
+    if (error instanceof TypeError) showNetworkWarning();
+    else feedback(error instanceof Error ? error.message : "Could not delete this task.", true);
+  } finally { taskActionPending = false; }
 });
 
 $("task-edit-close").addEventListener("click", () => taskEditDialog.close());
@@ -130,7 +133,7 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body;
 }
 const logsFor = (date: string) => new Map<string, boolean>(logs.filter(log => log.date === date).map(log => [log.taskId, log.completed] as [string, boolean]));
-const tasksFor = (date: string) => tasks.filter(task => task.createdAt.slice(0, 10) <= date && (!task.archivedAt || task.archivedAt.slice(0, 10) > date));
+const tasksFor = (date: string) => tasks.filter(task => localDayKey(task.createdAt) <= date && (!task.archivedAt || localDayKey(task.archivedAt) > date));
 function completedCount(date: string) {
   const due = tasksFor(date), done = logsFor(date);
   return { done: due.filter(task => done.get(task.id)).length, total: due.length };
@@ -159,7 +162,7 @@ function renderDaily() {
     return `<div class="task-row ${checked ? "is-complete" : ""}" data-task-row="${esc(task.id)}">
       <button class="task-check ${checked ? "checked" : ""}" type="button" data-task-toggle="${esc(task.id)}" aria-label="${checked ? "Mark incomplete" : "Mark complete"}: ${esc(task.title)}" aria-pressed="${checked}">${checked ? "✓" : ""}</button>
       <button class="task-row-title" type="button" data-task-toggle="${esc(task.id)}" aria-label="${checked ? "Mark incomplete" : "Mark complete"}: ${esc(task.title)}" aria-pressed="${checked}">${esc(task.title)}</button>
-      <button class="task-edit" type="button" data-task-edit="${esc(task.id)}" aria-label="Edit task">···</button>
+      <button class="task-edit" type="button" data-task-edit="${esc(task.id)}" aria-label="Edit task" ${task.id.startsWith("pending-") ? "disabled" : ""}>···</button>
     </div>`;
   }).join("") : '<p class="task-empty">Nothing on your list yet. Add one small thing you want to show up for.</p>';
 }
@@ -198,7 +201,7 @@ function renderAnalysis() {
   }
   const rate = possible ? Math.round(done / possible * 100) : 0;
   const taskStats = tasks.map(task => {
-    const applicable = validDays.filter(key => task.createdAt.slice(0, 10) <= key && (!task.archivedAt || task.archivedAt.slice(0, 10) > key));
+    const applicable = validDays.filter(key => localDayKey(task.createdAt) <= key && (!task.archivedAt || localDayKey(task.archivedAt) > key));
     const count = applicable.filter(key => logsFor(key).get(task.id)).length;
     return { title: task.title, count, total: applicable.length, rate: applicable.length ? Math.round(count / applicable.length * 100) : 0 };
   }).filter(item => item.total).sort((a, b) => b.rate - a.rate || b.count - a.count);
@@ -297,7 +300,7 @@ $("task-list").addEventListener("click", async event => {
     void syncTaskState(taskId, date, key);
   } else if (edit) {
     const task = tasks.find(item => item.id === edit.dataset.taskEdit);
-    if (!task || busy) return;
+    if (!task || task.id.startsWith("pending-")) return;
     openTaskEditor(task);
   }
 });

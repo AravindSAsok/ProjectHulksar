@@ -83,6 +83,8 @@ Nutrition values are estimates, not medical advice. Do not imply that estimates 
 - If cloud synchronization fails, retain the local-first state where the existing storage contract supports it and show exactly: “Unstable network, some data may not be synced” for 2 seconds. Do not claim cloud sync succeeded. Preserve existing auth and user-scoped MongoDB API checks; never bypass server authentication.
 - Avoid redundant client-side session round trips before protected API calls; let the API perform its existing authoritative authentication check. Cache one-time MongoDB index initialization per warm server instance rather than calling createIndex on every request.
 - Keep feedback accessible (role=status/aria-live), touch targets comfortable, and keyboard activation functional. Do not optimistically discard data on a failed mutation without a clear rollback or local-save behavior.
+- Task deletion is a soft archive: it must disappear from the user's current/future local-calendar checklists immediately after a successful API sync, while past-date checklists and completed check-ins remain available. Compare ISO timestamps as local calendar dates in task UI logic; do not slice UTC date strings for local-day visibility. The delete endpoint must support legacy documents with missing, null, or empty archivedAt values, verify the MongoDB update matched (or the task was already archived), and preserve userId scoping.
+- Task editor/delete actions must not be blocked by an unrelated task creation or check-in request. Use task-specific pending state; disable edit/delete only for a task whose create request is still pending. Surface API errors instead of disguising every failure as a network outage.
 
 ## 4. Development workflow
 
