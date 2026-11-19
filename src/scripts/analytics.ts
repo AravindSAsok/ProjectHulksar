@@ -10,7 +10,56 @@ const startInput = el<HTMLInputElement>("analytics-start");
 const endInput = el<HTMLInputElement>("analytics-end");
 const scope = el<HTMLSelectElement>("analytics-scope");
 const feedback = el<HTMLParagraphElement>("analytics-feedback");
+const analyticsSection = el<HTMLElement>("progress-analytics");
+const analyticsContent = el<HTMLDivElement>("analytics-content");
+const analyticsToggle = el<HTMLButtonElement>("analytics-toggle");
+const analyticsToggleLabel = el<HTMLSpanElement>("analytics-toggle-label");
+const analyticsView = el<HTMLSelectElement>("analytics-view");
+const analyticsPreferenceKey = "hulksar-analytics-expanded";
+const analyticsViewKey = "hulksar-analytics-view";
 const fmt = (n: number) => Math.round(n).toLocaleString("en-IN");
+
+function setAnalyticsExpanded(expanded: boolean): void {
+  analyticsContent.hidden = !expanded;
+  analyticsSection.classList.toggle("is-collapsed", !expanded);
+  analyticsToggle.setAttribute("aria-expanded", String(expanded));
+  analyticsToggleLabel.textContent = expanded ? "Hide analytics" : "Show analytics";
+  try { localStorage.setItem(analyticsPreferenceKey, expanded ? "true" : "false"); } catch { /* Storage is optional. */ }
+}
+
+function syncAnalyticsViewOptions(): void {
+  const foodOnly = scope.value === "food";
+  const tasksOnly = scope.value === "tasks";
+  const options = Array.from(analyticsView.options);
+  for (const option of options) {
+    option.disabled = (foodOnly && option.value === "tasks") ||
+      (tasksOnly && (option.value === "calories" || option.value === "meals"));
+  }
+  if (analyticsView.selectedOptions[0]?.disabled) {
+    analyticsView.value = tasksOnly ? "tasks" : "calories";
+  }
+  applyAnalyticsView();
+}
+
+function applyAnalyticsView(): void {
+  const selected = analyticsView.value;
+  el<HTMLElement>("analytics-panel-calories").hidden = selected !== "calories";
+  el<HTMLElement>("analytics-panel-meals").hidden = selected !== "meals";
+  el<HTMLElement>("analytics-panel-tasks").hidden = selected !== "tasks";
+  el<HTMLElement>("analytics-panel-table").hidden = selected !== "table";
+  try { localStorage.setItem(analyticsViewKey, selected); } catch { /* Storage is optional. */ }
+}
+
+try {
+  if (localStorage.getItem(analyticsPreferenceKey) === "true") setAnalyticsExpanded(true);
+  const savedView = localStorage.getItem(analyticsViewKey);
+  if (savedView && Array.from(analyticsView.options).some(option => option.value === savedView)) analyticsView.value = savedView;
+} catch { /* Use the compact default when storage is unavailable. */ }
+analyticsToggle.addEventListener("click", () => {
+  setAnalyticsExpanded(analyticsToggle.getAttribute("aria-expanded") !== "true");
+});
+analyticsView.addEventListener("change", applyAnalyticsView);
+syncAnalyticsViewOptions();
 const localKey = (date: Date) => date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
 const parseKey = (key: string) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, Number(key.slice(8, 10)));
 function rangeFor(value: string) {
@@ -171,6 +220,9 @@ rangeFor(period.value);
 period.addEventListener("change", () => { if (period.value !== "custom") rangeFor(period.value); });
 startInput.addEventListener("change", () => { period.value = "custom"; });
 endInput.addEventListener("change", () => { period.value = "custom"; });
-scope.addEventListener("change", load);
+scope.addEventListener("change", () => {
+  syncAnalyticsViewOptions();
+  void load();
+});
 el<HTMLButtonElement>("analytics-refresh").addEventListener("click", load);
 load();
