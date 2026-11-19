@@ -95,6 +95,13 @@ Before editing:
 5. Check for existing styles and helpers before adding new ones.
 6. Define the smallest safe patch and list the behaviors that must remain unchanged.
 
+Documentation and handoff are mandatory for every meaningful task:
+
+- Update the canonical root `AGENTS.md` with durable project knowledge, behavior/API/architecture changes, and instructions future agents need.
+- Append a dated entry to `docs/DEVELOPMENT_LOG.md` with the goal/root cause, changed files, behavior and data/API impact, checks actually run, commit/deployment reference, and remaining risks.
+- Keep this legacy `agent.md` aligned with shared workflow rules in `AGENTS.md`.
+- Do not rely on chat history as the only record of a project change; do not duplicate the entire chronological log in the agent guide.
+
 During implementation:
 
 1. Make targeted changes in the existing architecture.
@@ -204,7 +211,7 @@ For diary and AI changes:
 
 - Keep commits focused and use imperative messages, for example: `Fix mobile account profile display`.
 - Do not force-push or rewrite shared history.
-- Do not commit directly to `main` unless the task explicitly asks for it.
+- **Always commit and push completed changes directly to `main` by default.** Do not create feature branches or PRs unless the user explicitly asks for them or GitHub protection rules technically block a direct push; if blocked, explain and ask before switching workflows.
 - Do not deploy an unbuilt or unverified change when a build check is available.
 - If a check cannot be run, say so clearly and do not describe it as passing.
 - If production deployment fails, keep the last known-good deployment intact and report the failure; do not claim the release is live.
