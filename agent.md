@@ -230,3 +230,8 @@ Every completed task should report:
 - Deployment URL and terminal status, if deployment was requested.
 
 Accuracy is more important than a green-looking report. Never claim a feature, test, commit, or deployment succeeded unless the corresponding result was observed.
+
+
+## Task deletion reliability
+
+Task deletion is a soft archive. If a DELETE request fails or its response is lost, the client must re-fetch the selected month from the authenticated API before rolling back its optimistic UI state. A task confirmed archived by the server must not reappear in the checklist. Preserve prior-date check-ins and keep the canonical workflow in root `AGENTS.md` authoritative.

@@ -86,10 +86,27 @@ $("task-delete-confirm-button").addEventListener("click", async () => {
     await api("/api/tasks?id=" + encodeURIComponent(task.id), { method: "DELETE" });
     feedback("Task removed from future checklists. Previous check-ins are preserved.");
   } catch (error) {
-    task.archivedAt = previousArchivedAt;
-    render();
-    if (error instanceof TypeError) showNetworkWarning();
-    else feedback(error instanceof Error ? error.message : "Could not delete this task.", true);
+    // A DELETE can reach MongoDB even if its response is lost. Re-read the
+    // authoritative task state before rolling back the optimistic UI update.
+    // This prevents a successfully archived task from reappearing after a
+    // transient network error.
+    try {
+      const latest = await api<{ tasks: Task[]; logs: TaskLog[] }>("/api/tasks?month=" + month);
+      tasks = latest.tasks || [];
+      logs = latest.logs || [];
+      render();
+      const serverTask = tasks.find(item => item.id === task.id);
+      if (!serverTask || serverTask.archivedAt) {
+        feedback("Task removed from future checklists. Previous check-ins are preserved.");
+      } else {
+        feedback(error instanceof Error ? error.message : "Could not delete this task.", true);
+      }
+    } catch {
+      task.archivedAt = previousArchivedAt;
+      render();
+      if (error instanceof TypeError) showNetworkWarning();
+      else feedback(error instanceof Error ? error.message : "Could not delete this task.", true);
+    }
   } finally { taskActionPending = false; }
 });
 

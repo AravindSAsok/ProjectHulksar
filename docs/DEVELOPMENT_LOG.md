@@ -90,3 +90,13 @@ Append-only record of meaningful implementation and operational changes.
 - Commit: `eb72e746cf8d00a54473320274b1c4da1150fda9` — https://github.com/AravindSAsok/ProjectHulksar/commit/eb72e746cf8d00a54473320274b1c4da1150fda9
 - Production deployment: READY — https://projecthulksar-2v1qa83wu-kukki.vercel.app (production aliases include https://projecthulksar.vercel.app).
 - Remaining risks: no access to the complaining user's authenticated browser session or task document, so the exact production failure has not been reproduced against that account. A real-user delete confirmation is still needed.
+
+
+## 2026-11-19 — Task deletion state reconciliation
+- Goal: prevent a task that was successfully archived from reappearing after a transient DELETE response/network failure.
+- Root-cause assessment: the client optimistically sets `archivedAt`, then restores the old value on any DELETE error. If MongoDB commits the archive but the response is lost, that rollback can temporarily contradict server state. This matches the reported disappear-then-return symptom but is not confirmed without the user's network/API trace.
+- Changed files: `src/scripts/tasks.ts` (re-fetch the selected month after a DELETE error and reconcile against the authoritative server state); `AGENTS.md` and `agent.md` (document the reconciliation contract).
+- Data/API impact: no schema, endpoint, authentication, or database changes. Historical check-ins remain preserved; reconciliation uses the existing authenticated GET endpoint.
+- Checks: source-level patch and exact replacement verified before commit. `npm run check`, `npm run build`, automated tests, CI, and live authenticated deletion were not run from this GitHub-only session.
+- Deployment: pending GitHub CI and Vercel deployment after the main push.
+- Remaining risk: a failed reconciliation request still requires rollback and may leave the user needing to retry; verify with an authenticated device test and inspect API responses if the symptom persists.
