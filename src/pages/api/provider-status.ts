@@ -5,6 +5,14 @@ export const maxDuration = 20;
 
 type ModelRecord = { id?: string; name?: string; displayName?: string; supportedGenerationMethods?: string[]; pricing?: { prompt?: string; completion?: string } };
 
+// Stable Gemini text-generation models with a documented free Standard API tier.
+const FREE_GEMINI_TEXT_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite"
+] as const;
+
 const responseJson = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
   headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
@@ -56,9 +64,9 @@ async function probe(
         return Boolean(model.id) && !/(whisper|orpheus|prompt-guard|safeguard|embedding|tts|transcrib|speech)/.test(id);
       }
       if (provider === "gemini") {
-        return Boolean(model.name) &&
-          (!model.supportedGenerationMethods || model.supportedGenerationMethods.includes("generateContent")) &&
-          !/(2[.]5|3[.]8|tts|image|banana|lyria|transcrib|robotics|deep-research|antigravity|computer-use)/.test(id);
+        const modelId = (model.id ?? model.name ?? "").replace(/^models\//, "");
+        return FREE_GEMINI_TEXT_MODELS.includes(modelId as typeof FREE_GEMINI_TEXT_MODELS[number]) &&
+          (!model.supportedGenerationMethods || model.supportedGenerationMethods.includes("generateContent"));
       }
       return Boolean(model.id) && Number(model.pricing?.prompt) === 0 && Number(model.pricing?.completion) === 0 && !(/:batch$|image|banana|audio|speech|transcrib|tts|lyria|video|embedding/.test(id));
     });
@@ -67,20 +75,24 @@ async function probe(
       return id.replace(/^models\//, "");
     }).filter(Boolean);
 
-    const modelOptions = records.map((model) => {
+    const orderedRecords = provider === "gemini"
+      ? [...records].sort((a, b) => FREE_GEMINI_TEXT_MODELS.indexOf((a.id ?? a.name ?? "").replace(/^models\//, "") as typeof FREE_GEMINI_TEXT_MODELS[number]) - FREE_GEMINI_TEXT_MODELS.indexOf((b.id ?? b.name ?? "").replace(/^models\//, "") as typeof FREE_GEMINI_TEXT_MODELS[number]))
+      : records;
+    const modelOptions = orderedRecords.map((model) => {
       const rawId = model.id ?? model.name ?? "";
       const id = rawId.replace(/^models\//, "");
       return id ? { id, name: model.displayName || id } : null;
     }).filter((model): model is { id: string; name: string } => Boolean(model));
 
     const preferred = provider === "groq"
-      ? ["llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]
+      ? ["openai/gpt-oss-20b", "llama-3.1-8b-instant"]
       : provider === "gemini"
-        ? ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"]
+        ? [...FREE_GEMINI_TEXT_MODELS]
         : ["openrouter/free", ...ids.slice(0, 4)];
 
     return {
       provider, configured: true, ok: true, status: response.status,
+      defaultModel: provider === "gemini" ? (process.env.GEMINI_MODEL?.trim() || "gemini-3.6-flash") : provider === "groq" ? (process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-20b") : undefined,
       latencyMs: Date.now() - started, modelCount: ids.length,
       recommendedModels: [...new Set(preferred.filter((id) => id === "openrouter/free" || ids.includes(id)))].slice(0, 5),
       sampleModels: ids.slice(0, 8),

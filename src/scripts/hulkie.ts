@@ -1,7 +1,7 @@
 export {};
 
 type ProviderModel = { id: string; name: string };
-type ProviderStatus = { provider: string; configured: boolean; ok: boolean; modelCount: number; models?: ProviderModel[] };
+type ProviderStatus = { provider: string; configured: boolean; ok: boolean; modelCount: number; defaultModel?: string; models?: ProviderModel[] };
 type ChatMessage = { id?: string; role: "user" | "assistant"; content: string; created_at?: string };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -66,7 +66,7 @@ async function loadModels(): Promise<void> {
       modelSelect.add(new Option("No models available", ""));
       return;
     }
-    modelSelect.add(new Option("Use provider default", ""));
+    modelSelect.add(new Option(selected.defaultModel ? "Use default · " + selected.defaultModel : "Use provider default", ""));
     for (const model of selected.models) modelSelect.add(new Option(model.name === model.id ? model.id : model.name + " · " + model.id, model.id));
     modelSelect.disabled = false;
   } catch {

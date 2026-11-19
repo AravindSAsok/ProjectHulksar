@@ -201,7 +201,7 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
                     <select id="quick-provider">
                       <option value="auto">Automatic fallback</option>
                       <option value="groq">Groq</option>
-                      <option value="gemini">Gemini</option>
+                      <option value="gemini" selected>Gemini · free default</option>
                       <option value="openrouter">OpenRouter · free models only</option>
                     </select>
                   </label>
@@ -441,7 +441,7 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
       <button id="hulkie-close" class="hulkie-close" type="button" aria-label="Close Hulkie">×</button>
     </header>
     <div class="hulkie-model-row">
-      <label>AI brain<select id="hulkie-provider"><option value="auto">Automatic · best available</option><option value="groq">Groq</option><option value="gemini">Gemini</option><option value="openrouter">OpenRouter · free models only</option></select></label>
+      <label>AI brain<select id="hulkie-provider"><option value="auto">Automatic · best available</option><option value="groq">Groq</option><option value="gemini" selected>Gemini · free default</option><option value="openrouter">OpenRouter · free models only</option></select></label>
       <label>Model<select id="hulkie-model" disabled><option value="">Automatic fallback</option></select></label>
     </div>
     <div class="hulkie-messages" id="hulkie-messages" role="log" aria-live="polite">

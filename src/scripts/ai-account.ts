@@ -8,6 +8,7 @@ type ProviderStatus = {
   modelCount: number;
   models?: ProviderModel[];
   message?: string;
+  defaultModel?: string;
 };
 type StatusResponse = { providers?: ProviderStatus[] };
 
@@ -81,7 +82,7 @@ async function loadModels(): Promise<void> {
       return;
     }
 
-    modelSelect.add(new Option("Use configured default", ""));
+    modelSelect.add(new Option(provider.defaultModel ? "Use default · " + provider.defaultModel : "Use configured default", ""));
     for (const model of provider.models) {
       const label = model.name && model.name !== model.id ? model.name + " · " + model.id : model.id;
       modelSelect.add(new Option(label, model.id));
@@ -92,7 +93,9 @@ async function loadModels(): Promise<void> {
       modelSelect.value = savedModelPreference.model;
       if (modelStatus) modelStatus.textContent = "Your preferred model was restored from this device.";
     } else if (modelStatus) {
-      modelStatus.textContent = provider.modelCount.toLocaleString() + " models returned by " + selectedProvider + ".";
+      modelStatus.textContent = provider.defaultModel
+        ? "Default: " + provider.defaultModel + " · " + provider.modelCount.toLocaleString() + " free models available."
+        : provider.modelCount.toLocaleString() + " models returned by " + selectedProvider + ".";
     }
     updatePreferenceButton();
   } catch {

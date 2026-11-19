@@ -32,3 +32,11 @@ Append-only record of meaningful implementation and operational changes.
 - Kept the existing read-only analytics API, MongoDB ownership filters, calculations, date controls, scope filters, summary metrics and daily data. No database writes, schema changes, dependencies or Supabase data changes.
 - Accessibility: native button/select controls, `aria-expanded` and `aria-controls`, visible keyboard focus, and live status feedback.
 - Verification: source review completed. Automated CI/build and production/browser checks are pending for this commit.
+
+
+## 2026-11-19 — Gemini and Groq production provider setup
+- Confirmed Vercel production has sensitive server-side `GEMINI_API_KEY` and `GROQ_API_KEY` variables. Both provider model-list endpoints return HTTP 200 from the deployed app. Existing `GEMINI_MODEL=gemini-3.6-flash` and `GROQ_MODEL=openai/gpt-oss-20b` settings are already present; no secret values were copied into source control or exposed to the browser.
+- Restricted the Gemini picker to four stable text-generation models with a documented free Standard tier: Gemini 3.6 Flash, 3.5 Flash, 3.5 Flash-Lite and 3.1 Flash-Lite. Paid-only, media-only and unsupported aliases are no longer presented as free text choices.
+- Kept Gemini 3.6 Flash as the default because it is available in the current API key's model catalogue and is documented as free on the Gemini API Standard tier. The existing Vercel `GEMINI_MODEL` already points to it.
+- Set Gemini as the initial provider for Quick food log and Hulkie; explicit saved food-log model preferences still take precedence. The model dropdown now labels the server-configured default clearly.
+- Verification limitation: live model catalogue connectivity was checked for Gemini and Groq, but per-model generation benchmarks could not be run from the available browser runner (runner wallet unavailable) and the Vercel secret API did not return decrypted values for safe direct testing. Do not describe individual generation models as benchmark-passed.
