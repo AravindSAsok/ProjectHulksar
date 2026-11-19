@@ -65,3 +65,15 @@ Append-only record of meaningful implementation and operational changes.
 - Kept task edits and deletes optimistic with rollback and the existing authenticated task API. No database schema, auth, dependency, or collection changes.
 - Hardened the DELETE endpoint to treat an already-archived task as a successful idempotent archive without overwriting its original archive timestamp; ownership remains scoped by the verified userId.
 - Verification: source-level review only in GitHub-connected environment. `npm run check`, `npm run build`, automated tests, authenticated browser testing, mobile-device testing, CI and deployment verification remain pending.
+
+
+## 2026-11-19 — Mandatory agent handoff documentation and main-branch workflow
+- Updated the canonical `AGENTS.md` and compatibility `agent.md` so every coding agent/chat is instructed to read the project guidance, record durable discoveries and behavior changes in `AGENTS.md`, and append a dated, detailed entry to `docs/DEVELOPMENT_LOG.md` for every meaningful task.
+- Set the repository's default Git workflow to commit and push directly to `main` after checks. Feature branches and PRs are exceptions only when explicitly requested by the user or when GitHub branch protection technically blocks direct pushes; in the latter case, agents must explain the blocker and ask before changing workflow.
+- Added the task editor contract: use the theme-aware in-app edit/delete dialog and explicit delete confirmation; do not reintroduce browser-native prompts for task editing.
+- Clarified that `AGENTS.md` is the durable current handoff/instructions source, while `docs/DEVELOPMENT_LOG.md` is the append-only chronological record. Keep legacy `agent.md` shared workflow rules aligned.
+- Changed files: `AGENTS.md`, `agent.md`, `docs/DEVELOPMENT_LOG.md`.
+- Data/API impact: documentation and contributor workflow only; no application code, database, auth, or API behavior changed.
+- Verification: reviewed the current repository guidance and checked the updated instruction text for conflicting branch/PR rules. Application tests/build are not applicable to this documentation-only change.
+- Commit/deployment: pending commit and push to `main`; deployment not applicable.
+- Remaining risks: GitHub branch protection may still require an approved PR; agents must not bypass repository protections.
