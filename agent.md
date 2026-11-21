@@ -75,7 +75,7 @@ Preserve all of the following:
 - Provider/model discovery and selection for Groq, Gemini, and OpenRouter.
 - Automatic provider fallback.
 - Local storage fallback and MongoDB cloud synchronization.
-- One-time, read-only import of legacy Supabase PostgreSQL food entries and tracker settings into MongoDB. Never write to or delete legacy PostgreSQL rows.
+- Supabase migration files are historical legacy schema references only. Do not assume a live import path exists or reapply those SQL migrations without an explicitly reviewed migration plan.
 - Daily calorie goal, rolling 24-hour calorie balance, macro totals, meal breakdown, searchable/date-filtered history, and seven-day consistency summary.
 
 Nutrition values are estimates, not medical advice. Do not imply that estimates are exact.
@@ -185,7 +185,7 @@ Rules:
 - Keep MongoDB collection documents versionable and export-friendly. Add indexes for user-scoped queries and common sort/filter paths.
 - Never expose MONGODB_URI to browser code or prefix it with PUBLIC_.
 - Verify every MongoDB read/write/delete is scoped to the server-verified userId.
-- Preserve the one-time, read-only legacy Supabase import. Do not run or modify the copied SQL migrations against the shared Supabase project.
+- Treat `supabase/migrations/` as historical reference only. Do not reapply or modify those SQL migrations as part of routine app development.
 - Do not store uploaded food images or base64 image payloads. Vision requests are processed transiently; persist only reviewed nutrition details.
 - Verify local fallback, queued insert retries, legacy import idempotency, and guest-to-account behavior whenever persistence code changes.
 
