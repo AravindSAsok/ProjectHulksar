@@ -14,6 +14,18 @@ This repository is an independent application based on TrackCake's food diary ex
 - Hulkie assistant and configurable AI providers.
 - Dark red/black default theme with a saved light-theme toggle.
 
+## Multi-app platform
+
+Hulksar now includes **messCulator**, a separate budget and shared-expense calculator at `/messculator`.
+
+- Set an original budget and track total spending, remaining budget, and negative overspending.
+- Add borrowed funds separately. The available-cash figure includes borrowing, while the original budget balance remains visible so borrowed money is never mistaken for budget.
+- Add people to a shared budget. Expenses split equally by default, with optional custom per-person amounts that must sum exactly to the expense total.
+- Review expense history and each person's cumulative share; remove expenses and people when needed. Existing saved allocations retain the person's name even if that person is later removed from the active list.
+- messCulator is intentionally local-first and currently saves to this browser/device using `localStorage`. It does not use Hulksar sign-in, MongoDB, or cross-device cloud sync. Clearing browser site data or using another browser/device will not carry this budget over, so users should keep that limitation in mind.
+
+Open it from the dashboard navigation or visit `/messculator` directly. It shares Hulksar's saved theme and responsive app shell while keeping its budget data separate from nutrition and task records.
+
 ## Technology
 
 - Astro 5 + TypeScript.
