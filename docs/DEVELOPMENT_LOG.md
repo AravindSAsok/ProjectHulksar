@@ -153,3 +153,5 @@ Append-only record of meaningful implementation and operational changes.
 - Corrected monthly expense rendering so the selected month is read before filtering the expense list.
 - Made the app launcher consume `HULKSAR_APPS` directly for its app cards, default-home options and allowed ordering IDs. Future app registration now has one canonical source rather than a hard-coded duplicate list.
 - Verification remains pending CI/build and authenticated browser testing.
+
+- Follow-up: wired the launcher script to the Astro-provided app registry at runtime and corrected the month-filter empty state. CI/build verification still pending.
