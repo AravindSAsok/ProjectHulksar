@@ -9,7 +9,7 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 
 ## Stack and architecture
 - Astro 5 + TypeScript; Node.js 22; Vercel deployment.
-- Supabase Auth establishes identity. MongoDB Atlas is the application database.
+- MongoDB Atlas is the shared application database and current Hulksar account/session store. The server verifies the existing Hulksar session through `authenticateRequest`; Supabase migration files are historical legacy references, not the active messCulator store.
 - API routes in \`src/pages/api/\` authenticate requests with \`authenticateRequest\` and scope every user-data query by the verified \`user.id\`.
 - Food diary: \`src/pages/api/tracker.ts\`, \`src/lib/store.ts\`, \`src/scripts/app.ts\`.
 - Tasks: \`src/pages/api/tasks.ts\`, \`src/scripts/tasks.ts\`, \`src/components/TaskTracker.astro\`.
@@ -18,8 +18,16 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Main page: \`src/pages/index.astro\`; global styles: \`src/styles/global.css\`.
 - Environment variable examples: \`.env.example\`. Never commit real secrets or local \`.env\` files.
 
+## Shared database and collection naming contract
+- All mini-apps share the same MongoDB Atlas database configured by `MONGODB_DB_NAME` (default `hulksar`). Do not create one database per app.
+- Every new app-specific MongoDB collection must use `<app_slug>_<entity>` in lowercase snake_case, for example `messculator_budgets` or `messculator_expenses`. Shared platform collections such as `users` and `auth_sessions` are not app-owned.
+- Existing unprefixed collections (`food_entries`, `tracker_settings`, `assistant_messages`, `daily_tasks`, `daily_task_logs`) are live legacy contracts. Do not rename/drop them or change their readers/writers without a separately reviewed, idempotent data migration and verification. New app collections must follow the prefix rule.
+- Every user-owned record includes `userId`; derive it only from `authenticateRequest` and scope every query/mutation to that verified ID.
+- messCulator collection contract: `messculator_budgets`, `messculator_people`, `messculator_expenses`, `messculator_expense_splits`, and `messculator_borrowings`. Create indexes on first authenticated API access. Its full snapshot writes must run in a MongoDB transaction; do not run parallel operations inside a transaction.
+- messCulator stores money as integer paise, keeps borrowed funds separate from original budget, validates custom allocations to equal the expense total, and retains historical split names after a person is removed.
+
 ## Data ownership and security (non-negotiable)
-- Supabase is authentication only; do not introduce new Supabase Postgres application writes.
+- Use the shared MongoDB Atlas database (default name `hulksar`) for current application and account data. Do not create a separate database per mini-app or introduce new Supabase Postgres application writes.
 - Never trust a userId supplied by the browser. Derive it only from the verified auth result.
 - Every MongoDB read, update, delete, and aggregation involving personal data must include the verified \`userId\`.
 - Keep MongoDB URI, AI provider keys and service credentials server-side. Never prefix them with \`PUBLIC_\`.
@@ -32,7 +40,7 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 ## Existing behavior that must remain intact
 - Manual, AI text and photo food entry; review-before-save; edit/delete; meal assignment; food history filters and pagination.
 - Calorie goal, macro totals, daily meal breakdown, seven-day consistency, local fallback and MongoDB sync.
-- Supabase email/password and anonymous auth/session behavior.
+- Hulksar account sign-in, sign-out and HttpOnly server session behavior.
 - Task creation, rename/archive, date-specific check-ins, monthly calendar and historical logs. Both the checkbox and task title must toggle completion with one click/tap; preserve native button keyboard accessibility and provide a comfortable mobile hit target. Task editing uses the in-app theme-aware dialog with separate Save/Delete actions and an explicit delete confirmation; do not reintroduce browser-native prompt/confirm dialogs for task editing.
 - Hulkie popup, chat history, provider/model choice, fallback and authenticated requests.
 - Responsive dark/light/leveling themes, keyboard accessibility and mobile-friendly dialogs.
@@ -63,12 +71,12 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 
 
 ## messCulator module
-- A separate mini-app route lives at `src/pages/messculator.astro`; the dashboard links to it from `src/pages/index.astro`.
-- messCulator manages an original budget, expense entries, separately recorded borrowed funds, a people list, equal default expense splits, optional custom per-person allocations, expense history, and cumulative per-person totals.
-- Monetary values are stored as integer paise/cents in the browser model to avoid floating-point split drift. Custom allocations must total the expense amount exactly; equal splits distribute leftover paise deterministically.
-- Current persistence is device-local only under the `hulksar-messculator-v1` localStorage key. Do not imply that this data syncs to MongoDB or follows the user across devices. Do not merge it with nutrition/task stores or Supabase data without an explicitly designed migration and authenticated user-scoped API contract.
-- The original budget balance is `budget - expenses` and may be negative. Available cash is `budget + borrowed - expenses`; borrowed funds remain separately visible and are not counted as original budget.
-- Preserve historical allocation names when a person is removed from the active people list. Validate all user-entered amounts and escape user-provided names/expense labels before rendering HTML.
+- Route: `src/pages/messculator.astro`; authenticated persistence API: `src/pages/api/messculator.ts`; shared MongoDB client: `src/lib/mongodb.ts`.
+- messCulator uses five app-prefixed collections in the shared `hulksar` database: `messculator_budgets`, `messculator_people`, `messculator_expenses`, `messculator_expense_splits`, and `messculator_borrowings`.
+- The API derives `userId` from `authenticateRequest`, validates the full state, and atomically replaces only that user's messCulator records in a MongoDB transaction. The browser serializes writes and keeps localStorage as a fallback.
+- Existing device-only data must not be silently assigned to an account. Ask before uploading it on first sync; if the account already has a budget, ask before replacing the device copy.
+- Monetary values are integer paise. Custom allocations must total the expense amount exactly; equal splits distribute remainder paise deterministically. Borrowed funds are separate from the original budget.
+- The original budget balance is `budget - expenses` and may be negative. Available cash is `budget + borrowed - expenses`. Preserve historical allocation names when a person is removed. Validate user-entered amounts and escape names/expense labels before rendering HTML.
 
 ## Development workflow
 1. Read this file, README.md, agent.md, the latest relevant docs, and the source files being changed.
