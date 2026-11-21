@@ -23,9 +23,9 @@ Do not replace working behavior with mocks, fixtures, placeholders, or hard-code
 
 - Framework: Astro 5 with TypeScript.
 - Runtime/deployment: Vercel using the Astro Vercel adapter.
-- Identity: Supabase Auth via the Supabase JS client.
+- Identity: Hulksar account records and HttpOnly sessions stored in MongoDB Atlas; authenticated through `src/lib/auth.ts` and `src/lib/server-auth.ts`.
 - Application persistence: MongoDB Atlas via the official MongoDB Node.js driver, accessed only from server-side Astro API routes.
-- Server API routes verify the incoming Supabase bearer token with auth.getUser() and scope every MongoDB query by the verified userId.
+- Server API routes verify the HttpOnly Hulksar session cookie through `authenticateRequest` and scope every MongoDB query by the verified userId.
 - AI providers: Groq, Gemini, and OpenRouter. Provider credentials must remain server-side.
 - Styling: shared stylesheet at `src/styles/global.css`.
 - Main dashboard markup: `src/pages/index.astro`.
@@ -34,27 +34,34 @@ Do not replace working behavior with mocks, fixtures, placeholders, or hard-code
 - Hulkie popup and chat client: `src/scripts/hulkie.ts`.
 - Shared document shell: `src/layouts/Layout.astro`.
 - Server endpoints: `src/pages/api/`.
-- Supabase migrations and database policy source: `supabase/migrations/`.
+- Historical legacy PostgreSQL schema reference: `supabase/migrations/` (do not reapply to the active MongoDB app database).
 
 Use the existing modules and storage abstractions. Do not introduce a second competing state-management or persistence layer.
 
 
 ## messCulator module
-- The standalone budget and expense-splitting mini-app is `src/pages/messculator.astro`, linked from the dashboard at `src/pages/index.astro`.
-- Its budget, expenses, borrowed funds, people, equal/custom allocations and summaries are currently stored only in browser localStorage (`hulksar-messculator-v1)); there is no cloud sync or MongoDB/API integration.
-- Keep original budget balance separate from available cash after borrowing. Use integer paise/cents for calculations, require custom shares to equal the expense total, preserve historical allocation names when removing active people, and safely escape user-entered labels.
-- Read root `AGENTS.md` for the complete current contract and direct-to-main workflow.
+- Route: `src/pages/messculator.astro`; authenticated persistence API: `src/pages/api/messculator.ts`.
+- Uses five app-prefixed collections in the shared MongoDB Atlas database: `messculator_budgets`, `messculator_people`, `messculator_expenses`, `messculator_expense_splits`, and `messculator_borrowings`.
+- API derives ownership from `authenticateRequest`, validates incoming state and saves a complete per-user snapshot transactionally. The client serializes writes and retains localStorage as a fallback.
+- First-time local-to-cloud migration requires explicit confirmation; an existing account budget is not silently overwritten by device data.
+- Keep amounts as integer paise, validate that custom allocations sum exactly to each expense, and preserve historical allocation names when active people are removed.
+
+## Shared database and collection naming
+- All mini-apps share the MongoDB Atlas database configured by `MONGODB_DB_NAME` (default `hulksar`); do not create a separate database per app.
+- Every new app-specific collection uses `<app_slug>_<entity>` in lowercase snake_case. Shared platform collections such as `users` and `auth_sessions` are platform-level.
+- Existing unprefixed collections are live legacy contracts and must not be renamed or dropped without a separately reviewed, idempotent data migration. New app-specific collections must use their app prefix.
+- Every user-owned document includes the verified `userId`; every read, update, delete and aggregation must scope by that ID.
 
 ## 3. Non-negotiable product contracts
 
 ### Authentication and user data
 
-- Preserve Supabase email/password sign-up, sign-in, sign-out, session persistence, token refresh, and guest/anonymous behavior.
-- Supabase is used for authentication only. Never use Supabase Postgres as the active Hulksar application store.
-- Send the current Supabase access token as a Bearer token to protected Hulksar API routes. Verify it server-side before accessing MongoDB.
+- Preserve the existing Hulksar account sign-up/sign-in/sign-out and HttpOnly session behavior.
+- MongoDB Atlas is the active Hulksar application and account database. Do not create a separate database per mini-app or add new Supabase Postgres application writes.
+- Protected API routes authenticate the existing HttpOnly Hulksar session with `authenticateRequest` before accessing MongoDB.
 - Never expose service-role keys or provider API keys in browser code, public environment variables, logs, or committed files.
 - Every MongoDB document containing user data must include userId. Every read, update and delete must include the verified userId in its MongoDB filter. Never trust a client-supplied user ID.
-- Do not change table names, columns, API payload shapes, or migration history unless the task explicitly requires it and the change is reviewed end-to-end.
+- Do not change existing collection names, document fields, API payload shapes, or migration history unless explicitly required and reviewed end-to-end. All newly created app-specific collections must follow the app-prefix naming contract in `AGENTS.md`.
 - Guest/local diary import must not overwrite another user's rows. Use user-scoped IDs and idempotent insert-only operations.
 - Do not clear local or cloud data as a side effect of cosmetic UI changes.
 - Display the authenticated user's metadata name when present; otherwise derive a readable label from the email local-part. Keep the full email available in account details.
