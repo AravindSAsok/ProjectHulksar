@@ -7,6 +7,8 @@ This file is the working agreement for AI coding agents and human contributors m
 
 ## 1. Product and priorities
 
+Hulksar is a multi-app platform. Keep the shared app registry, user-selected app order/default home, and monthly messCulator reports aligned with the codebase. Every meaningful task must update `AGENTS.md`, `agent.md`, `README.md`, and append a detailed dated entry to `docs/DEVELOPMENT_LOG.md`, tracking progress, checks, remaining work, and commit/deployment status.
+
 Hulksar is a lightweight, privacy-conscious food diary and calorie tracker. The product helps people record meals, review estimated nutrition, understand daily calorie and macro progress, and ask Hulkie questions about their own diary.
 
 Priorities, in order:
@@ -39,7 +41,13 @@ Do not replace working behavior with mocks, fixtures, placeholders, or hard-code
 Use the existing modules and storage abstractions. Do not introduce a second competing state-management or persistence layer.
 
 
+## App launcher and customization
+- Shared app registry: `src/lib/apps.ts`. Register every mini-app there so `/apps`, ordering controls, and default-home settings include it.
+- App preferences use `/api/app-preferences` and user-scoped `hulksar_app_preferences`, with localStorage fallback. Never trust a client-supplied userId.
+
 ## messCulator module
+- Monthly reports filter expenses and timestamped borrowing entries by calendar month. Legacy aggregate borrowed money stays in all-time totals but is not assigned to a month.
+
 - Route: `src/pages/messculator.astro`; authenticated persistence API: `src/pages/api/messculator.ts`.
 - Uses five app-prefixed collections in the shared MongoDB Atlas database: `messculator_budgets`, `messculator_people`, `messculator_expenses`, `messculator_expense_splits`, and `messculator_borrowings`.
 - API derives ownership from `authenticateRequest`, validates incoming state and saves a complete per-user snapshot transactionally. The client serializes writes and retains localStorage as a fallback.

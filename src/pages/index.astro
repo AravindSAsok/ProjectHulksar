@@ -5,6 +5,9 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
 ---
 
 <Layout title="Hulksar — Your life, in sync">
+<script is:inline>
+(() => { const key="hulksar-app-preferences-v1"; const go=p=>{if(p?.defaultApp==="messculator"&&location.pathname==="/")location.replace("/messculator")}; try{go(JSON.parse(localStorage.getItem(key)||"null"))}catch{} fetch("/api/app-preferences",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.preferences){localStorage.setItem(key,JSON.stringify(d.preferences));go(d.preferences)}}).catch(()=>{}); })();
+</script>
   <div class="app-shell" id="top">
     <header class="topbar">
       <div class="topbar-inner">
@@ -26,6 +29,7 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
           <a class="nav-link" href="#tasks">Daily Tasks</a>
           <a class="nav-link" href="#progress-analytics">Progress</a>
           <a class="nav-link" href="/messculator">messCulator</a>
+          <a class="nav-link" href="/apps">Customize apps</a>
         </nav>
 
         <div class="top-actions">

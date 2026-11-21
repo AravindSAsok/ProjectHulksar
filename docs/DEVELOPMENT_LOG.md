@@ -135,3 +135,15 @@ Append-only record of meaningful implementation and operational changes.
 - Latest Vercel production deployment for `main` reached `READY`; the public `/messculator` route was fetched successfully and displayed the new account-sync status.
 - The production smoke fetch had no authenticated browser session and therefore correctly displayed “Saved on this device · sign in to sync”. The first signed-in visit calls the protected API, creates the five collections/indexes, and enables cloud persistence. A direct Atlas collection listing was not available in this session, so live collection existence and signed-in read/write remain to be confirmed from an authenticated app session.
 - Existing legacy unprefixed collections remain unchanged to protect live data. The app-prefix naming convention is enforced for all newly added app-specific collections; renaming existing collections requires a separate copy-and-verify migration.
+
+
+## 2026-11-21 — Monthly messCulator reports and customizable Hulksar app launcher
+- Goal: enable month-based financial review and let each account choose its default app and app order.
+- Added a month selector with monthly expense totals, timestamped new borrowings, net cash movement, transaction count and per-person allocations. Expense history is filtered to the selected month; overall budget/cash metrics remain all-time.
+- Updated messCulator persistence to store borrowing transactions individually. Existing aggregate borrowing records remain in the all-time borrowed total but are not assigned to a month because historical dates cannot be trusted.
+- Added shared app registry (`src/lib/apps.ts`), authenticated preferences API (`/api/app-preferences`), and `/apps` settings page for default-home and app ordering. Preferences are stored per user in `hulksar_app_preferences`, with local fallback. Root dashboard redirects to messCulator when selected as default.
+- Added navigation links and updated README, AGENTS.md and agent.md. Future apps must register in the shared registry.
+- Data/security: all account preference and messCulator API queries are scoped to the server-verified userId. No existing app collections are renamed or dropped.
+- Verification: GitHub source changes staged for commit; automated check/build, CI, Vercel deployment and authenticated browser/month-boundary testing are pending.
+- Commit/deployment: pending.
+- Remaining risks: historical aggregate borrowings cannot be reliably allocated to past months; verify monthly totals and cross-device preferences after deployment.

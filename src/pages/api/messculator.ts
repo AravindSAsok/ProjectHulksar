@@ -9,7 +9,8 @@ export const maxDuration = 30;
 type Person = { id: string; name: string };
 type Allocation = { personId: string; name: string; amount: number };
 type Expense = { id: string; name: string; amount: number; allocations: Allocation[]; createdAt: string };
-type MessculatorState = { budget: number; borrowed: number; people: Person[]; expenses: Expense[] };
+type Borrowing = { id: string; amount: number; createdAt: string };
+type MessculatorState = { budget: number; borrowed: number; legacyBorrowed: number; borrowings: Borrowing[]; people: Person[]; expenses: Expense[] };
 
 const COLLECTIONS = {
   budgets: "messculator_budgets",
@@ -58,7 +59,9 @@ function validDate(value: unknown): value is string {
 function parseState(value: unknown): MessculatorState | null {
   if (!isRecord(value) || !validPaise(value.budget) || !validPaise(value.borrowed) ||
       !Array.isArray(value.people) || value.people.length > 100 ||
-      !Array.isArray(value.expenses) || value.expenses.length > 5000) return null;
+      !Array.isArray(value.expenses) || value.expenses.length > 5000 ||
+      (value.borrowings !== undefined && (!Array.isArray(value.borrowings) || value.borrowings.length > 5000)) ||
+      (value.legacyBorrowed !== undefined && !validPaise(value.legacyBorrowed))) return null;
 
   const people: Person[] = [];
   const personIds = new Set<string>();
@@ -96,7 +99,16 @@ function parseState(value: unknown): MessculatorState | null {
     expenses.push({ id: item.id, name: item.name.trim(), amount: item.amount, allocations, createdAt: item.createdAt });
   }
 
-  return { budget: value.budget, borrowed: value.borrowed, people, expenses };
+  const borrowings: Borrowing[] = [];
+  const borrowingIds = new Set<string>();
+  for (const item of (Array.isArray(value.borrowings) ? value.borrowings : [])) {
+    if (!isRecord(item) || !validId(item.id) || borrowingIds.has(item.id) || !validPaise(item.amount, false) || !validDate(item.createdAt)) return null;
+    borrowingIds.add(item.id); borrowings.push({ id: item.id, amount: item.amount, createdAt: item.createdAt });
+  }
+  const legacyBorrowed = value.legacyBorrowed === undefined ? (value.borrowings === undefined ? value.borrowed : 0) : value.legacyBorrowed;
+  const borrowingTotal = borrowings.reduce((sum, item) => sum + item.amount, legacyBorrowed);
+  if (!Number.isSafeInteger(borrowingTotal) || borrowingTotal !== value.borrowed) return null;
+  return { budget: value.budget, borrowed: value.borrowed, legacyBorrowed, borrowings, people, expenses };
 }
 
 export const GET: APIRoute = async ({ request }) => {
@@ -118,9 +130,13 @@ export const GET: APIRoute = async ({ request }) => {
       allocations.push({ personId: String(row.personId), name: String(row.name), amount: Number(row.amountPaise) || 0 });
       splitMap.set(String(row.expenseId), allocations);
     }
+    const legacyBorrowed = borrowings.filter(row => row.id === "total" || row.id === "legacy-total").reduce((sum, row) => sum + (Number(row.amountPaise) || 0), 0);
+    const borrowingHistory = borrowings.filter(row => row.id !== "total" && row.id !== "legacy-total").map(row => ({ id: String(row.id), amount: Number(row.amountPaise) || 0, createdAt: String(row.createdAt || row.updatedAt || "") })).filter(row => validDate(row.createdAt));
     const state: MessculatorState = {
       budget: Number(budget?.budgetPaise) || 0,
       borrowed: borrowings.reduce((sum, row) => sum + (Number(row.amountPaise) || 0), 0),
+      legacyBorrowed,
+      borrowings: borrowingHistory,
       people: people.map(row => ({ id: String(row.id), name: String(row.name) })),
       expenses: expenses.map(row => ({
         id: String(row.id), name: String(row.name || ""), amount: Number(row.amountPaise) || 0,
@@ -192,8 +208,11 @@ export const PUT: APIRoute = async ({ request }) => {
           })));
           if (splitRows.length) await splits.insertMany(splitRows, { session });
         }
-        if (state.borrowed > 0) {
-          await borrowings.insertOne({ userId, id: "total", amountPaise: state.borrowed, updatedAt: now }, { session });
+        if (state.legacyBorrowed > 0) {
+          await borrowings.insertOne({ userId, id: "legacy-total", amountPaise: state.legacyBorrowed, updatedAt: now }, { session });
+        }
+        if (state.borrowings.length) {
+          await borrowings.insertMany(state.borrowings.map(item => ({ userId, id: item.id, amountPaise: item.amount, createdAt: item.createdAt })), { session });
         }
       });
     } finally {

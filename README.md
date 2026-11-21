@@ -7,7 +7,8 @@
 - **TrackCake / nutrition tracker** — food diary, calorie goals, macros, searchable food history and AI-assisted food logging.
 - **Hulksar Tasks** — daily tasks, habit check-ins and history.
 - **Hulkie** — personal assistant with configurable AI providers.
-- **messCulator** — budget manager, expenses, borrowed funds, people and equal/custom expense splitting at `/messculator`.
+- **messCulator** — budget manager, expenses, borrowed funds, people, equal/custom expense splitting and month-based financial reports at `/messculator`.
+- **Custom app launcher** — `/apps` lets each user reorder registered apps and choose the default landing app (Hulksar or messCulator). Future apps register in `src/lib/apps.ts`.
 
 New mini-apps should be added as independent sections and must not duplicate or interfere with another app's data.
 
@@ -31,9 +32,19 @@ messCulator uses five app-prefixed collections in the shared `hulksar` database:
 | `messculator_people` | People attached to the account's budget |
 | `messculator_expenses` | Expense records and timestamps |
 | `messculator_expense_splits` | Per-expense person allocations, stored in integer paise |
-| `messculator_borrowings` | Aggregate borrowed amount, kept separate from the original budget |
+| `messculator_borrowings` | Individually timestamped borrowing transactions, plus a preserved legacy aggregate record where applicable |
 
 The API creates the collections and their indexes on the first authenticated messCulator request. Budget, people, expense, borrowing and split updates are committed together in a MongoDB transaction. Each query is scoped to the verified account's `userId`.
+
+### Monthly financial reports
+
+- Select a calendar month to review expenses, timestamped borrowing transactions, net cash movement, transaction count and per-person expense shares. Expense history follows the selected month; top-level budget and cash balances remain all-time totals.
+- New borrowing transactions are stored individually with timestamps. Old aggregate borrowing is preserved in all-time totals but is not attributed to a month because its historical transaction dates are unavailable.
+
+### App launcher preferences
+
+- `/apps` provides default-home selection and up/down ordering controls. The root dashboard opens messCulator directly when it is the saved default.
+- Preferences are stored in user-scoped `hulksar_app_preferences` and cached locally for guest/offline fallback. Register future apps in `src/lib/apps.ts`; do not duplicate app registries across UI/API.
 
 ### messCulator data sync
 
@@ -42,6 +53,10 @@ The API creates the collections and their indexes on the first authenticated mes
 - Local browser storage remains a fallback when the user is signed out or the database is temporarily unavailable.
 - Once synced, the budget is available on other devices after signing into the same Hulksar account.
 - Resetting the budget removes only that account's messCulator records; it does not touch another app's collections.
+
+## Progress tracking for contributors
+
+Every meaningful implementation must update `AGENTS.md`, `agent.md`, `README.md`, and append a dated entry to `docs/DEVELOPMENT_LOG.md`. Track completed work, current state, checks actually run, remaining risks, and commit/deployment status. Read the latest progress entry before continuing a task.
 
 ## Technology
 

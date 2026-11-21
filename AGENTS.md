@@ -19,6 +19,8 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Environment variable examples: \`.env.example\`. Never commit real secrets or local \`.env\` files.
 
 ## Shared database and collection naming contract
+- Shared app registry and launcher preferences: `src/lib/apps.ts`, `/apps`, and `/api/app-preferences`. Register each future mini-app in `HULKSAR_APPS`; preserve user-selected app ordering and default landing app. Preferences use user-scoped `hulksar_app_preferences` plus local fallback.
+
 - All mini-apps share the same MongoDB Atlas database configured by `MONGODB_DB_NAME` (default `hulksar`). Do not create one database per app.
 - Every new app-specific MongoDB collection must use `<app_slug>_<entity>` in lowercase snake_case, for example `messculator_budgets` or `messculator_expenses`. Shared platform collections such as `users` and `auth_sessions` are not app-owned.
 - Existing unprefixed collections (`food_entries`, `tracker_settings`, `assistant_messages`, `daily_tasks`, `daily_task_logs`) are live legacy contracts. Do not rename/drop them or change their readers/writers without a separately reviewed, idempotent data migration and verification. New app collections must follow the prefix rule.
@@ -71,6 +73,8 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 
 
 ## messCulator module
+- Monthly reports filter expenses and timestamped borrowing transactions by their recorded `createdAt` month. New borrowing records are timestamped individually; legacy aggregate borrowed totals remain in all-time totals but must not be assigned to an invented month.
+
 - Route: `src/pages/messculator.astro`; authenticated persistence API: `src/pages/api/messculator.ts`; shared MongoDB client: `src/lib/mongodb.ts`.
 - messCulator uses five app-prefixed collections in the shared `hulksar` database: `messculator_budgets`, `messculator_people`, `messculator_expenses`, `messculator_expense_splits`, and `messculator_borrowings`.
 - The API derives `userId` from `authenticateRequest`, validates the full state, and atomically replaces only that user's messCulator records in a MongoDB transaction. The browser serializes writes and keeps localStorage as a fallback.
@@ -79,6 +83,8 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - The original budget balance is `budget - expenses` and may be negative. Available cash is `budget + borrowed - expenses`. Preserve historical allocation names when a person is removed. Validate user-entered amounts and escape names/expense labels before rendering HTML.
 
 ## Development workflow
+- Always track progress: after every meaningful implementation, update `AGENTS.md`, `agent.md`, `README.md`, and append a dated entry to `docs/DEVELOPMENT_LOG.md`. Record completed work, current status, checks actually run, known gaps, and latest commit/deployment reference. Read these progress notes before resuming work.
+
 1. Read this file, README.md, agent.md, the latest relevant docs, and the source files being changed.
 2. Inspect the current main commit, working tree and open PRs/issues before editing. **The default and required destination for all completed code and documentation changes is main: commit and push directly to main.** Do not create feature branches or PRs unless the user explicitly asks for a branch/PR or a repository protection rule technically prevents a direct push. If direct push is blocked, explain the blocker and ask before using a PR workflow.
 3. Trace the complete UI → client script → API → storage flow before editing.
