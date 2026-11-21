@@ -115,7 +115,7 @@ export const GET: APIRoute = async ({ request }) => {
     const splitMap = new Map<string, Allocation[]>();
     for (const row of splits) {
       const allocations = splitMap.get(String(row.expenseId)) || [];
-      allocations.push({ personId: String(row.personId), name: String(row.name), amount: Number(row.amount) || 0 });
+      allocations.push({ personId: String(row.personId), name: String(row.name), amount: Number(row.amountPaise) || 0 });
       splitMap.set(String(row.expenseId), allocations);
     }
     const state: MessculatorState = {
@@ -160,13 +160,11 @@ export const PUT: APIRoute = async ({ request }) => {
         const splits = db.collection(COLLECTIONS.splits);
 
         if (isEmpty) {
-          await Promise.all([
-            budgets.deleteOne({ userId }, { session }),
-            people.deleteMany({ userId }, { session }),
-            expenses.deleteMany({ userId }, { session }),
-            borrowings.deleteMany({ userId }, { session }),
-            splits.deleteMany({ userId }, { session })
-          ]);
+          await budgets.deleteOne({ userId }, { session });
+          await people.deleteMany({ userId }, { session });
+          await expenses.deleteMany({ userId }, { session });
+          await borrowings.deleteMany({ userId }, { session });
+          await splits.deleteMany({ userId }, { session });
           return;
         }
 
@@ -176,12 +174,10 @@ export const PUT: APIRoute = async ({ request }) => {
           { upsert: true, session }
         );
 
-        await Promise.all([
-          people.deleteMany({ userId }, { session }),
-          expenses.deleteMany({ userId }, { session }),
-          borrowings.deleteMany({ userId }, { session }),
-          splits.deleteMany({ userId }, { session })
-        ]);
+        await people.deleteMany({ userId }, { session });
+        await expenses.deleteMany({ userId }, { session });
+        await borrowings.deleteMany({ userId }, { session });
+        await splits.deleteMany({ userId }, { session });
 
         if (state.people.length) {
           await people.insertMany(state.people.map(person => ({ ...person, userId, createdAt: now })), { session });
