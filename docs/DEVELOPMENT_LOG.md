@@ -111,3 +111,10 @@ Append-only record of meaningful implementation and operational changes.
 - Verification: source was reviewed for budget arithmetic, paise-safe equal/custom splits, input validation, local-only persistence and separation from existing stores. Automated `npm run check`, `npm run build`, mobile-browser interaction tests and CI/deployment status are pending because this GitHub-connected session does not provide a local project runtime/browser.
 - Commit/deployment: documentation and navigation commits were pushed directly to `main`; final feature commit and CI/Vercel status are to be recorded after completion.
 - Remaining limitations: no cloud sync, export/import, settlement tracking or cross-device sharing in this initial version. Removing a person affects the active list only; prior expense allocations retain their saved name and amount.
+
+
+### Verification update — 2026-11-21
+- GitHub Actions run [#69](https://github.com/AravindSAsok/ProjectHulksar/actions/runs/44891186124) passed for feature-fix commit `acc2c2fcce3895c0644d1fafd6885ed5e95d87d5`: existing food tests (4/4), `npm run check`, and `npm run build` all completed successfully.
+- The first CI attempt exposed an apostrophe inside a single-quoted HTML string in the new page. The script-rendered empty-state text was escaped as an HTML entity and the subsequent CI run passed. The remaining two Astro check hints are pre-existing unused declarations in `src/scripts/app.ts` and `src/scripts/tasks.ts`.
+- Vercel production deployment for the fixed application commit reached `READY`: https://projecthulksar-n7idm1ufj-kukki.vercel.app. Production aliases include https://projecthulksar.vercel.app.
+- Authenticated browser/device interaction testing was not available in this GitHub-connected session. messCulator's localStorage persistence, budget arithmetic, equal/custom allocation flows and mobile layout still need a hands-on smoke test.
