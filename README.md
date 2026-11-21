@@ -1,60 +1,61 @@
 # Project Hulksar
 
-**Your life, in sync.** A personal lifestyle hub, starting with nutrition and designed to grow into routines, wellbeing, activity and everyday life tracking.
+**Your life, in sync.** Hulksar is a multi-app personal lifestyle platform. Each mini-app has its own UI, data model and app-prefixed MongoDB collections while sharing one Hulksar account system and one MongoDB Atlas database.
 
-This repository is an independent application based on TrackCake's food diary experience. Hulksar keeps the existing nutrition UI and AI workflows while using MongoDB Atlas as its primary application database.
+## Platform apps
 
-## Current foundation
+- **TrackCake / nutrition tracker** — food diary, calorie goals, macros, searchable food history and AI-assisted food logging.
+- **Hulksar Tasks** — daily tasks, habit check-ins and history.
+- **Hulkie** — personal assistant with configurable AI providers.
+- **messCulator** — budget manager, expenses, borrowed funds, people and equal/custom expense splitting at `/messculator`.
 
-- Manual, text-assisted and photo-assisted food logging.
-- Calorie goals, macro summaries, meal breakdowns and searchable food history.
-- Food history editing and deletion.
-- Supabase Auth for email/password and anonymous sessions.
-- MongoDB Atlas for user-scoped application data.
-- Hulkie assistant and configurable AI providers.
-- Dark red/black default theme with a saved light-theme toggle.
+New mini-apps should be added as independent sections and must not duplicate or interfere with another app's data.
 
-## Multi-app platform
+## Shared database architecture
 
-Hulksar now includes **messCulator**, a separate budget and shared-expense calculator at `/messculator`.
+All Hulksar apps use the same MongoDB Atlas database. The default database name is `hulksar` (overridable through the server-only `MONGODB_DB_NAME` variable). Do not create a separate MongoDB database for each mini-app.
 
-- Set an original budget and track total spending, remaining budget, and negative overspending.
-- Add borrowed funds separately. The available-cash figure includes borrowing, while the original budget balance remains visible so borrowed money is never mistaken for budget.
-- Add people to a shared budget. Expenses split equally by default, with optional custom per-person amounts that must sum exactly to the expense total.
-- Review expense history and each person's cumulative share; remove expenses and people when needed. Existing saved allocations retain the person's name even if that person is later removed from the active list.
-- messCulator is intentionally local-first and currently saves to this browser/device using `localStorage`. It does not use Hulksar sign-in, MongoDB, or cross-device cloud sync. Clearing browser site data or using another browser/device will not carry this budget over, so users should keep that limitation in mind.
+**Collection naming rule:** every new app-specific collection must use the app slug as a prefix, in lowercase snake_case: `<app_slug>_<entity>`. Examples: `messculator_budgets`, `messculator_people`, `messculator_expenses`. Shared platform collections such as `users` and `auth_sessions` are platform-level and do not belong to an individual mini-app.
 
-Open it from the dashboard navigation or visit `/messculator` directly. It shares Hulksar's saved theme and responsive app shell while keeping its budget data separate from nutrition and task records.
+Existing Hulksar collections such as `food_entries`, `tracker_settings`, `assistant_messages`, `daily_tasks` and `daily_task_logs` are legacy names used by live API routes. Keep them unchanged for compatibility; do not rename, drop or copy live records without a separately reviewed, idempotent migration and verification plan. All newly introduced app-specific collections must follow the prefix rule.
+
+Every user-owned document stores `userId`. API routes derive that value only from the authenticated server session and include it in every read, update and delete filter. Never trust a user ID supplied by the browser. MongoDB credentials stay server-side.
+
+### messCulator collections
+
+messCulator uses five app-prefixed collections in the shared `hulksar` database:
+
+| Collection | Purpose |
+|---|---|
+| `messculator_budgets` | One budget record per account, stored in integer paise |
+| `messculator_people` | People attached to the account's budget |
+| `messculator_expenses` | Expense records and timestamps |
+| `messculator_expense_splits` | Per-expense person allocations, stored in integer paise |
+| `messculator_borrowings` | Aggregate borrowed amount, kept separate from the original budget |
+
+The API creates the collections and their indexes on the first authenticated messCulator request. Budget, people, expense, borrowing and split updates are committed together in a MongoDB transaction. Each query is scoped to the verified account's `userId`.
+
+### messCulator data sync
+
+- Signed-in users load and save their budget through the authenticated `/api/messculator` endpoint.
+- Existing browser-only messCulator data is not silently assigned to an account. On first sync, the app asks before uploading device data or replacing a local copy with an existing account budget.
+- Local browser storage remains a fallback when the user is signed out or the database is temporarily unavailable.
+- Once synced, the budget is available on other devices after signing into the same Hulksar account.
+- Resetting the budget removes only that account's messCulator records; it does not touch another app's collections.
 
 ## Technology
 
-- Astro 5 + TypeScript.
-- Astro API routes running on the server.
+- Astro 5 + TypeScript, Node.js 22 and Vercel.
 - MongoDB Atlas using the official MongoDB Node.js driver.
-- Supabase Auth for identity only.
+- Hulksar server-managed accounts and HttpOnly session cookies; account and session records live in the shared MongoDB database.
 - Groq, Gemini and OpenRouter for AI features.
 - Open Food Facts and USDA FoodData Central for nutrition research.
-- Vercel for hosting.
 
-## Database and account separation
-
-MongoDB Atlas is the primary database for Hulksar. Food entries, calorie goals and Hulkie conversation history are stored in MongoDB documents scoped by the authenticated Supabase user ID.
-
-Supabase is retained for authentication only. The browser sends its Supabase access token to Hulksar API routes; the server verifies the token and applies the verified user ID to every MongoDB query. The MongoDB URI and AI provider keys must never be exposed to browser code.
-
-### Existing TrackCake data
-
-On the first authenticated Hulksar tracker request, the API performs a one-time, read-only import of that user's existing food_entries and tracker_settings from the legacy shared Supabase PostgreSQL database into MongoDB. It records a per-user migration marker so the import is not repeated.
-
-The import does not update or delete any Supabase rows. TrackCake remains untouched. After import, new Hulksar food entries, goals and Hulkie messages are stored in MongoDB and are not automatically synchronized back to TrackCake's PostgreSQL database.
-
-Keep the existing Supabase Auth project and add https://projecthulksar.vercel.app/** to its Auth Redirect URLs allowlist. Do not change the existing Auth Site URL if TrackCake still uses it.
-
-The supabase/migrations directory is retained as historical reference for the legacy PostgreSQL schema. **Do not run those SQL migrations again** against the shared Supabase project.
+Supabase migration files under `supabase/migrations/` are retained as historical reference for the legacy TrackCake PostgreSQL schema. They are not the active messCulator database and must not be reapplied to the shared Supabase project.
 
 ## Image privacy
 
-Food photos are processed in memory by the server-side vision endpoint and sent to the selected AI provider. Hulksar does not upload them to permanent file storage or save image bytes/base64 data in MongoDB. Only the returned nutrition details are eligible to be saved as a food entry. Avoid logging image payloads, and review each AI provider's own request-retention policy.
+Food photos are processed in memory by the server-side vision endpoint and sent to the selected AI provider. Hulksar does not upload them to permanent file storage or save image bytes/base64 data in MongoDB. Only returned nutrition details are eligible to be saved as a food entry. Avoid logging image payloads, and review each AI provider's own request-retention policy.
 
 ## Local setup
 
@@ -70,31 +71,18 @@ Open http://localhost:4321.
 
 ## Environment
 
-Add these values to your local .env and Vercel project settings:
+Add these values to your local `.env` and Vercel project settings:
 
 | Variable | Purpose |
 |---|---|
-| MONGODB_URI | MongoDB Atlas connection string (server-only) |
-| MONGODB_DB_NAME | Database name; defaults to hulksar |
-| PUBLIC_SUPABASE_URL | Supabase Auth project URL |
-| PUBLIC_SUPABASE_ANON_KEY | Supabase public anon/publishable key |
-| GEMINI_API_KEY | Optional Gemini AI provider |
-| GROQ_API_KEY | Optional Groq AI provider |
-| OPENROUTER_API_KEY | Optional OpenRouter AI provider |
-| USDA_FDC_API_KEY | Optional USDA nutrition lookup key |
+| `MONGODB_URI` | MongoDB Atlas connection string (server-only) |
+| `MONGODB_DB_NAME` | Database name; defaults to `hulksar` |
+| `GEMINI_API_KEY` | Optional Gemini AI provider |
+| `GROQ_API_KEY` | Optional Groq AI provider |
+| `OPENROUTER_API_KEY` | Optional OpenRouter AI provider |
+| `USDA_FDC_API_KEY` | Optional USDA nutrition lookup key |
 
-Add model overrides only when needed; the names are listed in .env.example. Never commit real API keys, MongoDB connection strings, or service-role keys. MongoDB and AI credentials must not use a PUBLIC_ prefix.
-
-## Data model
-
-MongoDB collections currently used:
-
-- food_entries: food details and nutrition values, with userId ownership.
-- tracker_settings: per-user calorie goal.
-- assistant_messages: per-user Hulkie conversation history.
-- migration_state: one-time legacy import markers.
-
-Indexes are created by the API on first use. Every user-owned query is filtered by the verified Supabase user ID.
+Add model overrides only when needed; the names are listed in `.env.example`. Never commit real API keys, MongoDB connection strings, or service credentials. MongoDB and AI credentials must not use a `PUBLIC_` prefix.
 
 ## Build and checks
 
@@ -105,4 +93,4 @@ npm run build
 
 ## Original project
 
-The starting point is [AravindSAsok/tracKcake](https://github.com/AravindSAsok/tracKcake). Project Hulksar is maintained independently; future lifestyle modules should be added here without changing TrackCake.
+The starting point is [AravindSAsok/tracKcake](https://github.com/AravindSAsok/tracKcake). Project Hulksar is maintained independently; new lifestyle apps should be added here using the shared database and app-prefixed collection contract.
