@@ -60,7 +60,7 @@ Use the existing modules and storage abstractions. Do not introduce a second com
 - Existing unprefixed collections are live legacy contracts and must not be renamed or dropped without a separately reviewed, idempotent data migration. New app-specific collections must use their app prefix.
 - Every user-owned document includes the verified `userId`; every read, update, delete and aggregation must scope by that ID.
 
-## 3. Non-negotiable product contracts
+## Release tracking\n- Verify the exact deployed commit SHA before describing a change as live. Record Vercel quota/permission blockers and do not assume a previous successful build covers later commits.\n\n## 3. Non-negotiable product contracts
 
 ### Authentication and user data
 

@@ -163,3 +163,11 @@ Append-only record of meaningful implementation and operational changes.
 - `npm run build` completed successfully in the Vercel production build. `npm run check`, authenticated data persistence, multi-account isolation, real month-boundary calculations, and mobile interaction tests were not independently run in this session.
 - Follow-up hardening: month grouping now uses the browser local calendar month (not UTC month slicing), and ordered launcher rows include direct Open links so the selected order controls the actual launcher.
 - Current follow-up commit/deployment status: this verification note and hardening patch are being committed now; recheck deployment after push.
+
+
+### Release status clarification — 2026-11-21
+- Latest code commit on `main`: `4145fb4f31456d32b0817512b3358ae2b724f805` — https://github.com/AravindSAsok/ProjectHulksar/commit/4145fb4f31456d32b0817512b3358ae2b724f805.
+- The Vercel production deployment for prior feature commit `286fba35b4a24e8ab97f9669508a7ef27b0f95bf` is `READY` and owns `https://projecthulksar.vercel.app`. The deployed version includes the monthly report and app customization core.
+- A deployment for `4145fb4f31456d32b0817512b3358ae2b724f805` was not created. The Vercel deployment API returned HTTP 402 `api-deployments-free-per-day` (resource limit: more than 100 deployments; retry after 1 day). No CLI fallback is available in this session. Do not claim the final local-month grouping and direct Open links are live until the latest SHA has a READY deployment.
+- Live smoke checks on the prior READY deployment: `/apps` rendered the app-order/default-home settings; `/messculator` rendered the month report; unauthenticated `/api/app-preferences` returned 401 as expected. Authenticated persistence and real user data remain untested.
+- `npm run build` passed for commit `286fba35b4a24e8ab97f9669508a7ef27b0f95bf`; `npm run check` and automated test suites were not independently run here.

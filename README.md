@@ -54,6 +54,10 @@ The API creates the collections and their indexes on the first authenticated mes
 - Once synced, the budget is available on other devices after signing into the same Hulksar account.
 - Resetting the budget removes only that account's messCulator records; it does not touch another app's collections.
 
+## Release verification note
+
+The app launcher and monthly report feature set was built successfully by Vercel for commit `286fba35b4a24e8ab97f9669508a7ef27b0f95bf`. The later main-branch refinements are recorded in `docs/DEVELOPMENT_LOG.md`; check the latest deployment SHA before assuming every refinement is live.
+
 ## Progress tracking for contributors
 
 Every meaningful implementation must update `AGENTS.md`, `agent.md`, `README.md`, and append a dated entry to `docs/DEVELOPMENT_LOG.md`. Track completed work, current state, checks actually run, remaining risks, and commit/deployment status. Read the latest progress entry before continuing a task.

@@ -82,7 +82,7 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Monetary values are integer paise. Custom allocations must total the expense amount exactly; equal splits distribute remainder paise deterministically. Borrowed funds are separate from the original budget.
 - The original budget balance is `budget - expenses` and may be negative. Available cash is `budget + borrowed - expenses`. Preserve historical allocation names when a person is removed. Validate user-entered amounts and escape names/expense labels before rendering HTML.
 
-## Development workflow
+## Release tracking\n- A successful deployment for an earlier commit does not prove the latest `main` commit is live. Verify the exact deployed SHA and report any deployment quota/permission blocker; never claim a later commit is deployed by inference.\n\n## Development workflow
 - Always track progress: after every meaningful implementation, update `AGENTS.md`, `agent.md`, `README.md`, and append a dated entry to `docs/DEVELOPMENT_LOG.md`. Record completed work, current status, checks actually run, known gaps, and latest commit/deployment reference. Read these progress notes before resuming work.
 
 1. Read this file, README.md, agent.md, the latest relevant docs, and the source files being changed.
