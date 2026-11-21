@@ -61,6 +61,15 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Task deletion is a soft archive: it must disappear from the user's current/future local-calendar checklists immediately after a successful API sync, while past-date checklists and completed check-ins remain available. Compare ISO timestamps as local calendar dates in task UI logic; do not slice UTC date strings for local-day visibility. The delete endpoint must support legacy documents with missing, null, or empty archivedAt values, verify the MongoDB update matched (or the task was already archived), and preserve userId scoping. If a DELETE request has an ambiguous network outcome, re-fetch the month from the authenticated API before rolling back the optimistic archive; only restore the task when the server confirms it remains active or reconciliation itself fails.
 - Task editor/delete actions must not be blocked by an unrelated task creation or check-in request. Use task-specific pending state; disable edit/delete only for a task whose create request is still pending. Surface API errors instead of disguising every failure as a network outage.
 
+
+## messCulator module
+- A separate mini-app route lives at `src/pages/messculator.astro`; the dashboard links to it from `src/pages/index.astro`.
+- messCulator manages an original budget, expense entries, separately recorded borrowed funds, a people list, equal default expense splits, optional custom per-person allocations, expense history, and cumulative per-person totals.
+- Monetary values are stored as integer paise/cents in the browser model to avoid floating-point split drift. Custom allocations must total the expense amount exactly; equal splits distribute leftover paise deterministically.
+- Current persistence is device-local only under the `hulksar-messculator-v1` localStorage key. Do not imply that this data syncs to MongoDB or follows the user across devices. Do not merge it with nutrition/task stores or Supabase data without an explicitly designed migration and authenticated user-scoped API contract.
+- The original budget balance is `budget - expenses` and may be negative. Available cash is `budget + borrowed - expenses`; borrowed funds remain separately visible and are not counted as original budget.
+- Preserve historical allocation names when a person is removed from the active people list. Validate all user-entered amounts and escape user-provided names/expense labels before rendering HTML.
+
 ## Development workflow
 1. Read this file, README.md, agent.md, the latest relevant docs, and the source files being changed.
 2. Inspect the current main commit, working tree and open PRs/issues before editing. **The default and required destination for all completed code and documentation changes is main: commit and push directly to main.** Do not create feature branches or PRs unless the user explicitly asks for a branch/PR or a repository protection rule technically prevents a direct push. If direct push is blocked, explain the blocker and ask before using a PR workflow.
