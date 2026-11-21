@@ -155,3 +155,11 @@ Append-only record of meaningful implementation and operational changes.
 - Verification remains pending CI/build and authenticated browser testing.
 
 - Follow-up: wired the launcher script to the Astro-provided app registry at runtime and corrected the month-filter empty state. CI/build verification still pending.
+
+
+### Verification update — 2026-11-21
+- Vercel production deployment for commit `286fba35b4a24e8ab97f9669508a7ef27b0f95bf` reached `READY`: https://projecthulksar.vercel.app (deployment: https://projecthulksar-osxabhkoa-kukki.vercel.app).
+- Live unauthenticated smoke checks returned the `/apps` launcher and `/messculator` monthly report UI successfully. `/api/app-preferences` correctly returned HTTP 401 while signed out.
+- `npm run build` completed successfully in the Vercel production build. `npm run check`, authenticated data persistence, multi-account isolation, real month-boundary calculations, and mobile interaction tests were not independently run in this session.
+- Follow-up hardening: month grouping now uses the browser local calendar month (not UTC month slicing), and ordered launcher rows include direct Open links so the selected order controls the actual launcher.
+- Current follow-up commit/deployment status: this verification note and hardening patch are being committed now; recheck deployment after push.

@@ -143,6 +143,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       setSyncStatus("Saved on this device · sync unavailable",true);
     }
   };
+  const monthKey = (value) => { const date=new Date(value); return Number.isNaN(date.getTime())?"":date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0"); };
   const totalSpent = () => state.expenses.reduce((sum,e)=>sum+Math.max(0,Number(e.amount)||0),0);
   const activePeople = () => state.people;
   const equalAllocations = (amount) => {
@@ -161,11 +162,11 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     $("budget-progress").style.width=(budget?Math.min(100,spent/budget*100):0)+"%"; $("budget-progress").style.background=left<0?"var(--mc-red)":"#e9a4b0";
     $("people-list").innerHTML=state.people.length?state.people.map(p=>'<span class="mc-person-chip">'+escapeHtml(p.name)+'<button type="button" data-remove-person="'+escapeHtml(p.id)+'" aria-label="Remove '+escapeHtml(p.name)+'">×</button></span>').join(""):'<p class="mc-empty-small">No people added yet. Add people to split expenses.</p>';
     const month=$("report-month").value;
-    const visibleExpenses=state.expenses.filter(e=>String(e.createdAt||"").slice(0,7)===month);
+    const visibleExpenses=state.expenses.filter(e=>monthKey(e.createdAt)===month);
     $("expense-count").textContent=visibleExpenses.length+" item"+(visibleExpenses.length===1?"":"s");
     $("expense-list").innerHTML=visibleExpenses.length?visibleExpenses.slice().reverse().map(e=>'<div class="mc-expense"><div class="mc-expense-main"><strong>'+escapeHtml(e.name||"Unnamed expense")+'</strong><small>'+escapeHtml((e.allocations||[]).map(a=>a.name).join(", ")||"No split details")+'</small></div><div class="mc-expense-side"><strong>'+money(e.amount)+'</strong><button type="button" data-delete-expense="'+escapeHtml(e.id)+'">Remove</button></div></div>').join(""):'<div class="mc-empty"><span>◌</span><strong>No expenses this month</strong><p>Choose another month or add an expense.</p></div>';
     const monthExpenses=state.expenses.filter(e=>String(e.createdAt||"").slice(0,7)===month);
-    const monthBorrowings=(state.borrowings||[]).filter(b=>String(b.createdAt||"").slice(0,7)===month);
+    const monthBorrowings=(state.borrowings||[]).filter(b=>monthKey(b.createdAt)===month);
     const monthSpent=monthExpenses.reduce((n,e)=>n+(Number(e.amount)||0),0);
     const monthBorrowed=monthBorrowings.reduce((n,b)=>n+(Number(b.amount)||0),0);
     $("month-expenses").textContent=money(monthSpent); $("month-borrowed").textContent=money(monthBorrowed); $("month-net").textContent=money(monthBorrowed-monthSpent); $("month-net").style.color=monthBorrowed-monthSpent<0?"var(--mc-red)":"var(--mc-green)"; $("month-count").textContent=String(monthExpenses.length+monthBorrowings.length);
@@ -210,7 +211,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   $("person-form").addEventListener("submit",e=>{e.preventDefault();const name=$("person-name").value.trim();if(!name)return;if(state.people.some(p=>p.name.toLowerCase()===name.toLowerCase())){ $("person-name").setCustomValidity("This person is already added.");$("person-name").reportValidity();return; }$("person-name").setCustomValidity("");state.people.push({id:makeId(),name});save();render();buildCustomFields();$("person-form").reset();});
   $("people-list").addEventListener("click",e=>{const btn=e.target.closest("[data-remove-person]");if(!btn)return;const person=state.people.find(p=>p.id===btn.dataset.removePerson);if(!person)return;if(!confirm("Remove "+person.name+" from the current people list? Existing expense records will keep their saved split."))return;state.people=state.people.filter(p=>p.id!==person.id);save();render();buildCustomFields();});
   $("borrow-form").addEventListener("submit",e=>{e.preventDefault();const amount=toCents($("borrow-amount").value);if(amount<=0)return;state.borrowings.push({id:makeId(),amount,createdAt:new Date().toISOString()});state.borrowed=(Number(state.borrowed)||0)+amount;save();render();$("borrow-form").reset();});
-  $("report-month").value=new Date().toISOString().slice(0,7); $("report-month").addEventListener("change",render);
+  const currentMonth=new Date(); $("report-month").value=currentMonth.getFullYear()+"-"+String(currentMonth.getMonth()+1).padStart(2,"0"); $("report-month").addEventListener("change",render);
   $("expense-list").addEventListener("click",e=>{const btn=e.target.closest("[data-delete-expense]");if(!btn)return;const expense=state.expenses.find(x=>x.id===btn.dataset.deleteExpense);if(!expense||!confirm("Remove this expense?"))return;state.expenses=state.expenses.filter(x=>x.id!==expense.id);save();render();});
   $("reset-app").addEventListener("click",()=>$("confirm-dialog").showModal());
   $("confirm-reset").addEventListener("click",()=>{state=blank();save();render();$("confirm-dialog").close();$("expense-form").reset();$("borrow-form").reset();buildCustomFields();});

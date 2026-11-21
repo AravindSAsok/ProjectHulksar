@@ -42,7 +42,7 @@ Use the existing modules and storage abstractions. Do not introduce a second com
 
 
 ## App launcher and customization
-- Shared app registry: `src/lib/apps.ts`. Register every mini-app there so `/apps`, ordering controls, and default-home settings include it.
+- Shared app registry: `src/lib/apps.ts`. Register every mini-app there so `/apps` launcher cards, ordering controls, and default-home settings include it.
 - App preferences use `/api/app-preferences` and user-scoped `hulksar_app_preferences`, with localStorage fallback. Never trust a client-supplied userId.
 
 ## messCulator module

@@ -19,7 +19,7 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Environment variable examples: \`.env.example\`. Never commit real secrets or local \`.env\` files.
 
 ## Shared database and collection naming contract
-- Shared app registry and launcher preferences: `src/lib/apps.ts`, `/apps`, and `/api/app-preferences`. Register each future mini-app in `HULKSAR_APPS`; preserve user-selected app ordering and default landing app. Preferences use user-scoped `hulksar_app_preferences` plus local fallback.
+- Shared app registry and launcher preferences: `src/lib/apps.ts`, `/apps`, and `/api/app-preferences`. Register each future mini-app in `HULKSAR_APPS`; the launcher cards, ordering controls, and default-home options are generated from that registry. Preserve user-selected app ordering and default landing app. Preferences use user-scoped `hulksar_app_preferences` plus local fallback.
 
 - All mini-apps share the same MongoDB Atlas database configured by `MONGODB_DB_NAME` (default `hulksar`). Do not create one database per app.
 - Every new app-specific MongoDB collection must use `<app_slug>_<entity>` in lowercase snake_case, for example `messculator_budgets` or `messculator_expenses`. Shared platform collections such as `users` and `auth_sessions` are not app-owned.

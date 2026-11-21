@@ -43,7 +43,7 @@ The API creates the collections and their indexes on the first authenticated mes
 
 ### App launcher preferences
 
-- `/apps` provides default-home selection and up/down ordering controls. The root dashboard opens messCulator directly when it is the saved default.
+- `/apps` is the app launcher and customization screen: ordered app cards link to each app, with default-home selection and up/down ordering controls. The root dashboard opens messCulator directly when it is the saved default.
 - Preferences are stored in user-scoped `hulksar_app_preferences` and cached locally for guest/offline fallback. Register future apps in `src/lib/apps.ts`; do not duplicate app registries across UI/API.
 
 ### messCulator data sync
