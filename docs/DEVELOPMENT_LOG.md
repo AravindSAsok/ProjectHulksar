@@ -100,3 +100,14 @@ Append-only record of meaningful implementation and operational changes.
 - Checks: source-level patch and exact replacement verified before commit. `npm run check`, `npm run build`, automated tests, CI, and live authenticated deletion were not run from this GitHub-only session.
 - Deployment: pending GitHub CI and Vercel deployment after the main push.
 - Remaining risk: a failed reconciliation request still requires rollback and may leave the user needing to retry; verify with an authenticated device test and inspect API responses if the symptom persists.
+
+
+## 2026-11-21 — Add messCulator as a separate Hulksar mini-app
+- Goal: expand Hulksar into a multi-app hub while preserving the existing nutrition, tasks, analytics and Hulkie experience.
+- Added `src/pages/messculator.astro`, a responsive standalone budget calculator with original budget editing, expense creation/removal, optional expense names, separately recorded borrowed funds, a people list, equal default splits, custom per-person allocations, expense history, and cumulative per-person breakdowns.
+- Budget balance is calculated as original budget minus expenses and can become negative. Available cash is calculated separately as budget plus borrowed funds minus expenses; remaining borrowed funds are shown separately. Monetary values are represented as integer paise/cents to avoid floating-point allocation drift. Equal-split remainder paise are distributed deterministically, and custom allocations are accepted only when their sum exactly matches the expense.
+- Added a dashboard navigation link to `/messculator`. Updated `README.md`, canonical `AGENTS.md`, and compatibility `agent.md` with the new module and its data contract.
+- Data/security impact: this first version stores messCulator data only in browser localStorage under `hulksar-messculator-v1`. It does not call APIs, access MongoDB/Supabase, or sync across devices. Existing Hulksar data stores and auth flows are untouched. User-entered labels are HTML-escaped before rendering.
+- Verification: source was reviewed for budget arithmetic, paise-safe equal/custom splits, input validation, local-only persistence and separation from existing stores. Automated `npm run check`, `npm run build`, mobile-browser interaction tests and CI/deployment status are pending because this GitHub-connected session does not provide a local project runtime/browser.
+- Commit/deployment: documentation and navigation commits were pushed directly to `main`; final feature commit and CI/Vercel status are to be recorded after completion.
+- Remaining limitations: no cloud sync, export/import, settlement tracking or cross-device sharing in this initial version. Removing a person affects the active list only; prior expense allocations retain their saved name and amount.
