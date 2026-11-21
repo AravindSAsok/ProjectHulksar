@@ -101,7 +101,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     state.expenses.forEach(e=>(e.allocations||[]).forEach(a=>{const key=a.personId||a.name;const prev=totals.get(key)||{name:a.name,amount:0};prev.amount+=Number(a.amount)||0;totals.set(key,prev);}));
     const list=Array.from(totals.values()).sort((a,b)=>b.amount-a.amount);
     $("split-count").textContent=list.length+" people";
-    $("person-breakdown").innerHTML=list.length?list.map(p=>'<div class="mc-person-stat"><small>'+escapeHtml(p.name)+'</small><strong>'+money(p.amount)+'</strong><span>'+ (spent?((p.amount/spent)*100).toFixed(1):"0.0")+'% of expenses</span></div>').join(""):'<p class="mc-empty-small">Add people and expenses to see each person's share.</p>';
+    $("person-breakdown").innerHTML=list.length?list.map(p=>'<div class="mc-person-stat"><small>'+escapeHtml(p.name)+'</small><strong>'+money(p.amount)+'</strong><span>'+ (spent?((p.amount/spent)*100).toFixed(1):"0.0")+'% of expenses</span></div>').join(""):'<p class="mc-empty-small">Add people and expenses to see each person&#39;s share.</p>';
     $("custom-split").hidden=$("split-mode").value!=="custom";
   };
   const buildCustomFields = () => {
