@@ -1,11 +1,14 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { HULKSAR_APPS } from "../lib/apps";
+const appIds = HULKSAR_APPS.map(app => app.id);
+const appCards = HULKSAR_APPS.map(app => `<article class="app-row" data-app-id="${app.id}"><span class="app-icon">${app.icon}</span><div class="app-copy"><strong>${app.name}</strong><small>${app.description}</small></div><div class="order-actions"><button type="button" data-move="up" aria-label="Move ${app.name} up">↑</button><button type="button" data-move="down" aria-label="Move ${app.name} down">↓</button></div></article>`).join("");
 ---
 <Layout title="Your apps — Hulksar" description="Choose your Hulksar home app and arrange your apps.">
 <main class="apps-shell"><header class="apps-header"><a class="apps-brand" href="/">HULK<span>SAR</span></a><a href="/">Back to Hulksar</a></header>
 <section class="apps-intro"><p class="eyebrow">YOUR HULKSAR SPACE</p><h1>Make it <span>yours.</span></h1><p>Choose which app opens first and arrange your app launcher. Your settings sync to your Hulksar account when you are signed in.</p></section>
-<section class="apps-panel"><p class="eyebrow">DEFAULT HOME</p><h2>What should open first?</h2><label class="default-choice">Open Hulksar with<select id="default-app"><option value="hulksar">Hulksar</option><option value="messculator">messCulator</option></select></label><p class="hint">Choose Hulksar for your lifestyle dashboard or messCulator to open your finance tracker directly.</p></section>
-<section class="apps-panel"><div class="panel-heading"><div><p class="eyebrow">APP ORDER</p><h2>Your apps, your order</h2></div><span class="hint">Move apps up or down</span></div><div id="app-order" class="app-order"><article class="app-row" data-app-id="hulksar"><span class="app-icon">✦</span><div class="app-copy"><strong>Hulksar</strong><small>Nutrition, daily tasks, progress and Hulkie</small></div><div class="order-actions"><button type="button" data-move="up" aria-label="Move Hulksar up">↑</button><button type="button" data-move="down" aria-label="Move Hulksar down">↓</button></div></article><article class="app-row" data-app-id="messculator"><span class="app-icon">₹</span><div class="app-copy"><strong>messCulator</strong><small>Budgets, expenses, borrowing and shared splits</small></div><div class="order-actions"><button type="button" data-move="up" aria-label="Move messCulator up">↑</button><button type="button" data-move="down" aria-label="Move messCulator down">↓</button></div></article></div></section>
+<section class="apps-panel"><p class="eyebrow">DEFAULT HOME</p><h2>What should open first?</h2><label class="default-choice">Open Hulksar with<select id="default-app">{HULKSAR_APPS.map(app => <option value={app.id}>{app.name}</option>)}</select></label><p class="hint">Choose Hulksar for your lifestyle dashboard or messCulator to open your finance tracker directly.</p></section>
+<section class="apps-panel"><div class="panel-heading"><div><p class="eyebrow">APP ORDER</p><h2>Your apps, your order</h2></div><span class="hint">Move apps up or down</span></div><div id="app-order" class="app-order" set:html={appCards}></div></section>
 <div class="apps-actions"><p id="save-status" role="status" aria-live="polite">Loading your preferences…</p><button id="save-apps" type="button">Save preferences</button></div><p class="apps-footnote">New Hulksar apps can be added to this launcher as the platform grows.</p></main>
 </Layout>
 <style>
@@ -13,7 +16,7 @@ import Layout from "../layouts/Layout.astro";
 </style>
 <script is:inline>
 (() => {
- const KEY="hulksar-app-preferences-v1", ids=["hulksar","messculator"], $=id=>document.getElementById(id);
+ const KEY="hulksar-app-preferences-v1", ids=${JSON.stringify(appIds)}, $=id=>document.getElementById(id);
  let prefs={defaultApp:"hulksar",order:ids.slice()};
  const normalize=v=>{const order=Array.isArray(v?.order)?v.order.filter(id=>ids.includes(id)):[];ids.forEach(id=>{if(!order.includes(id))order.push(id)});return{defaultApp:ids.includes(v?.defaultApp)?v.defaultApp:"hulksar",order}};
  const render=()=>{const rows=Array.from($("app-order").querySelectorAll(".app-row"));const map=Object.fromEntries(rows.map(row=>[row.dataset.appId,row]));$("app-order").replaceChildren(...prefs.order.map(id=>map[id]).filter(Boolean));$("app-order").querySelectorAll(".app-row").forEach((row,i)=>{row.querySelector('[data-move="up"]').disabled=i===0;row.querySelector('[data-move="down"]').disabled=i===prefs.order.length-1});$("default-app").value=prefs.defaultApp};

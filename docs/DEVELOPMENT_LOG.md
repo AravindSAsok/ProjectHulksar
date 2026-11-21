@@ -147,3 +147,9 @@ Append-only record of meaningful implementation and operational changes.
 - Verification: GitHub source changes staged for commit; automated check/build, CI, Vercel deployment and authenticated browser/month-boundary testing are pending.
 - Commit/deployment: pending.
 - Remaining risks: historical aggregate borrowings cannot be reliably allocated to past months; verify monthly totals and cross-device preferences after deployment.
+
+
+### Follow-up correction — 2026-11-21
+- Corrected monthly expense rendering so the selected month is read before filtering the expense list.
+- Made the app launcher consume `HULKSAR_APPS` directly for its app cards, default-home options and allowed ordering IDs. Future app registration now has one canonical source rather than a hard-coded duplicate list.
+- Verification remains pending CI/build and authenticated browser testing.

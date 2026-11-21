@@ -54,7 +54,7 @@ import Layout from "../layouts/Layout.astro";
         </article>
         <article class="mc-card">
           <div class="mc-section-head"><div><p class="mc-label">WHERE IT WENT</p><h2>Expense history</h2></div><span class="mc-count" id="expense-count">0 items</span></div>
-          <div id="expense-list" class="mc-expense-list"><div class="mc-empty"><span>◌</span><strong>No expenses yet</strong><p>Your added expenses will appear here.</p></div></div>
+          <div id="expense-list" class="mc-expense-list"><div class="mc-empty"><span>◌</span><strong>No expenses this month</strong><p>Choose another month or add an expense.</p></div></div>
         </article>
       </div>
     </section>
@@ -160,10 +160,10 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     $("spent-label").textContent=money(spent)+" spent"; $("budget-percent").textContent=budget?Math.round(spent/budget*100)+"%":"0%";
     $("budget-progress").style.width=(budget?Math.min(100,spent/budget*100):0)+"%"; $("budget-progress").style.background=left<0?"var(--mc-red)":"#e9a4b0";
     $("people-list").innerHTML=state.people.length?state.people.map(p=>'<span class="mc-person-chip">'+escapeHtml(p.name)+'<button type="button" data-remove-person="'+escapeHtml(p.id)+'" aria-label="Remove '+escapeHtml(p.name)+'">×</button></span>').join(""):'<p class="mc-empty-small">No people added yet. Add people to split expenses.</p>';
+    const month=$("report-month").value;
     const visibleExpenses=state.expenses.filter(e=>String(e.createdAt||"").slice(0,7)===month);
     $("expense-count").textContent=visibleExpenses.length+" item"+(visibleExpenses.length===1?"":"s");
     $("expense-list").innerHTML=visibleExpenses.length?visibleExpenses.slice().reverse().map(e=>'<div class="mc-expense"><div class="mc-expense-main"><strong>'+escapeHtml(e.name||"Unnamed expense")+'</strong><small>'+escapeHtml((e.allocations||[]).map(a=>a.name).join(", ")||"No split details")+'</small></div><div class="mc-expense-side"><strong>'+money(e.amount)+'</strong><button type="button" data-delete-expense="'+escapeHtml(e.id)+'">Remove</button></div></div>').join(""):'<div class="mc-empty"><span>◌</span><strong>No expenses yet</strong><p>Your added expenses will appear here.</p></div>';
-    const month=$("report-month").value;
     const monthExpenses=state.expenses.filter(e=>String(e.createdAt||"").slice(0,7)===month);
     const monthBorrowings=(state.borrowings||[]).filter(b=>String(b.createdAt||"").slice(0,7)===month);
     const monthSpent=monthExpenses.reduce((n,e)=>n+(Number(e.amount)||0),0);
