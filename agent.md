@@ -38,6 +38,13 @@ Do not replace working behavior with mocks, fixtures, placeholders, or hard-code
 
 Use the existing modules and storage abstractions. Do not introduce a second competing state-management or persistence layer.
 
+
+## messCulator module
+- The standalone budget and expense-splitting mini-app is `src/pages/messculator.astro`, linked from the dashboard at `src/pages/index.astro`.
+- Its budget, expenses, borrowed funds, people, equal/custom allocations and summaries are currently stored only in browser localStorage (`hulksar-messculator-v1)); there is no cloud sync or MongoDB/API integration.
+- Keep original budget balance separate from available cash after borrowing. Use integer paise/cents for calculations, require custom shares to equal the expense total, preserve historical allocation names when removing active people, and safely escape user-entered labels.
+- Read root `AGENTS.md` for the complete current contract and direct-to-main workflow.
+
 ## 3. Non-negotiable product contracts
 
 ### Authentication and user data
