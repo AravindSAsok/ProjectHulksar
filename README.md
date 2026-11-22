@@ -56,6 +56,7 @@ The API creates the collections and their indexes on the first authenticated mes
 - Local browser storage remains a fallback when the user is signed out or the database is temporarily unavailable.
 - Once synced, the budget is available on other devices after signing into the same Hulksar account.
 - Resetting the budget removes only that account's messCulator records; it does not touch another app's collections.
+- **Export all data (.txt)** downloads a UTF-8 plain-text backup covering every month, monthly budgets, the shared people list, every expense and person-wise allocation, dated borrowing records and optional lender names, plus legacy undated borrowing. The export includes a month summary, ISO timestamps, stable record IDs, INR values with exact paise, and short explanations so a person or LLM can interpret it without the app. When signed in, export waits for the initial account sync to finish before generating the file; it does not upload the export anywhere.
 
 ## Release verification note
 
