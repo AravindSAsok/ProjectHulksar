@@ -127,24 +127,24 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       "Purpose: A human-readable and language-model-friendly backup of all data stored in messCulator.",
       "Currency: Indian Rupees (INR). Amounts are shown as formatted currency and exact integer paise.",
       "Generated at: " + new Date().toISOString(),
-      "Data scope: All available months and records in this messCulator account/device, not just the month currently selected.",
+      "Data scope: All available calculation periods and records in this messCulator account/device, not just the period currently selected.",
       "Privacy: This file may contain personal names and financial details. Store and share it carefully.",
       "",
       "HOW TO READ THIS FILE",
       "---------------------",
-      "- Each month is identified by YYYY-MM.",
-      "- Budgets, expenses, borrowing and allocations are separate concepts.",
+      "- Each calculation period has a unique ID, a required start date, an optional end date and an optional name.",
+      "- Budgets, expenses, borrowing and allocations are separate concepts. Each expense and borrowing record belongs to a calculation period.",
       "- An expense allocation is the amount assigned to one person for that expense.",
-      "- Borrowed money is additional cash and is not part of the original monthly budget.",
+      "- Borrowed money is additional cash and is not part of the original period budget.",
       "- A blank lender means the lender was not recorded.",
-      "- Legacy borrowed money has no known month because it predates dated borrowing records.",
+      "- Legacy borrowed money has no known period because it predates dated borrowing records.",
       "- Record IDs are included to help identify individual records.",
       "",
       "ACCOUNT-WIDE SUMMARY",
       "--------------------",
       "People currently in the shared people list: " + state.people.length,
-      "Expense records across all months: " + state.expenses.length,
-      "Dated borrowing records across all months: " + (state.borrowings || []).length,
+      "Expense records across all periods: " + state.expenses.length,
+      "Dated borrowing records across all periods: " + (state.borrowings || []).length,
       "Calculation periods with saved budgets or transactions: " + orderedMonths.length,
       "Total dated borrowed amount: " + moneyWithPaise((state.borrowings||[]).reduce((sum,item)=>sum+(Number(item.amount)||0),0)),
       "Legacy borrowed amount without a date: " + moneyWithPaise(state.legacyBorrowed),
@@ -169,22 +169,22 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     if(orderedMonths.some(month=>state.periods?.some(period=>period.id===month)||Object.prototype.hasOwnProperty.call(state.monthlyBudgets||{},month))){
       orderedMonths.forEach(month=>{const period=state.periods?.find(item=>item.id===month);if(period)lines.push(period.id+" | "+periodLabel(period)+" | "+period.startDate+" to "+(period.endDate||"open-ended")+": "+moneyWithPaise(period.budget));else if(Object.prototype.hasOwnProperty.call(state.monthlyBudgets||{},month))lines.push(month+": "+moneyWithPaise(state.monthlyBudgets[month]));});
     } else lines.push("No calculation budgets are saved.");
-    lines.push("", "EXPENSE DETAILS (ALL MONTHS)", "----------------------------");
+    lines.push("", "EXPENSE DETAILS (ALL PERIODS)", "----------------------------");
     const allExpenses=state.expenses.slice().sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt)));
     if(allExpenses.length){
       allExpenses.forEach((item,index)=>{
-        lines.push("", "Expense "+(index+1), "  ID: "+cleanText(item.id), "  Month: "+(monthKey(item.createdAt)||"Unknown"), "  Date/time (ISO 8601): "+cleanText(item.createdAt), "  Name: "+(cleanText(item.name)||"Unnamed expense"), "  Total: "+moneyWithPaise(item.amount), "  Allocations / person-wise split:");
+        lines.push("", "Expense "+(index+1), "  ID: "+cleanText(item.id), "  Calculation period: "+cleanText(state.periods.find(period=>period.id===item.periodId)?.name||state.periods.find(period=>period.id===item.periodId)?.id||("legacy-"+monthKey(item.createdAt))||"Unknown"), "  Date/time (ISO 8601): "+cleanText(item.createdAt), "  Name: "+(cleanText(item.name)||"Unnamed expense"), "  Total: "+moneyWithPaise(item.amount), "  Allocations / person-wise split:");
         if(Array.isArray(item.allocations)&&item.allocations.length){
           item.allocations.forEach(allocation=>lines.push("    - "+cleanText(allocation.name||"Unnamed person")+" | Person ID: "+cleanText(allocation.personId||"not recorded")+" | Share: "+moneyWithPaise(allocation.amount)));
         } else lines.push("    No allocation details were saved for this expense.");
       });
     } else lines.push("No expense records are saved.");
-    lines.push("", "BORROWING DETAILS (ALL MONTHS)", "-----------------------------");
+    lines.push("", "BORROWING DETAILS (ALL PERIODS)", "-----------------------------");
     const allBorrowings=(state.borrowings||[]).slice().sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt)));
     if(allBorrowings.length){
-      allBorrowings.forEach((item,index)=>lines.push("", "Borrowing "+(index+1), "  ID: "+cleanText(item.id), "  Month: "+(monthKey(item.createdAt)||"Unknown"), "  Date/time (ISO 8601): "+cleanText(item.createdAt), "  Amount: "+moneyWithPaise(item.amount), "  Borrowed from: "+(cleanText(item.lender)||"Not specified")));
+      allBorrowings.forEach((item,index)=>lines.push("", "Borrowing "+(index+1), "  ID: "+cleanText(item.id), "  Calculation period: "+cleanText(state.periods.find(period=>period.id===item.periodId)?.name||state.periods.find(period=>period.id===item.periodId)?.id||("legacy-"+monthKey(item.createdAt))||"Unknown"), "  Date/time (ISO 8601): "+cleanText(item.createdAt), "  Amount: "+moneyWithPaise(item.amount), "  Borrowed from: "+(cleanText(item.lender)||"Not specified")));
     } else lines.push("No dated borrowing records are saved.");
-    lines.push("", "LEGACY BORROWED MONEY", "---------------------", "Amount: "+moneyWithPaise(state.legacyBorrowed), "Explanation: This is an older aggregate borrowing amount. Its original transaction dates and lender details were not available, so it is intentionally not assigned to any month.", "", "END OF EXPORT", "==============");
+    lines.push("", "LEGACY BORROWED MONEY", "---------------------", "Amount: "+moneyWithPaise(state.legacyBorrowed), "Explanation: This is an older aggregate borrowing amount. Its original transaction dates and lender details were not available, so it is intentionally not assigned to any calculation period.", "", "END OF EXPORT", "==============");
     state.periods.forEach(period=>lines.push("Period "+cleanText(period.id)+" | Name: "+(cleanText(period.name)||"Not named")+" | Dates: "+period.startDate+" to "+(period.endDate||"Open-ended")+" | Budget: "+moneyWithPaise(period.budget)));
     const content=lines.join("\n")+"\n";
     const blob=new Blob(["\uFEFF",content],{type:"text/plain;charset=utf-8"});
@@ -292,7 +292,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   };
   $("edit-budget").addEventListener("click",()=>{$("budget-amount").value=(Number(activePeriod()?.budget)||0)/100; $("budget-amount").value=Number($("budget-amount").value).toFixed(2);$("budget-dialog").showModal();});
   $("new-period").addEventListener("click",()=>{$("period-form").reset();$("period-start").value=new Date().toISOString().slice(0,10);$("period-end").value="";$("period-dialog").showModal();});
-  $("period-form").addEventListener("submit",e=>{e.preventDefault();const start=$("period-start").value,end=$("period-end").value,name=$("period-name").value.trim().slice(0,60);if(!start||(end&&end<start)){alert("Choose a valid date range.");return;}const id=makeId();state.periods.push({id,name,startDate:start,endDate:end,budget:0});$("report-month").value=id;state.budget=0;save();render();buildCustomFields();$("period-dialog").close();});
+  $("period-form").addEventListener("submit",e=>{e.preventDefault();const start=$("period-start").value,end=$("period-end").value,name=$("period-name").value.trim().slice(0,60);if(!start||(end&&end<start)){alert("Choose a valid date range.");return;}const id=makeId();state.periods.push({id,name,startDate:start,endDate:end,budget:0});$("report-month").value=id;state.budget=0;render();save();buildCustomFields();$("period-dialog").close();});
   $("budget-form").addEventListener("submit",e=>{e.preventDefault();const period=activePeriod();if(!period){alert("Create a calculation period first.");return;}period.budget=toCents($("budget-amount").value);state.budget=period.budget;save();render();$("budget-dialog").close();});
   $("expense-form").addEventListener("submit",e=>{
     e.preventDefault(); const amount=toCents($("expense-amount").value), name=$("expense-name").value.trim();
