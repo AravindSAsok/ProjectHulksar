@@ -63,7 +63,7 @@ function parseState(value: unknown): MessculatorState | null {
   if (!isRecord(value) || !validPaise(value.budget) || !validPaise(value.borrowed) ||
       !Array.isArray(value.people) || value.people.length > 100 ||
       (value.monthlyBudgets !== undefined && (!isRecord(value.monthlyBudgets) || Object.entries(value.monthlyBudgets).length > 120 || Object.entries(value.monthlyBudgets).some(([month, amount]) => !validMonthKey(month) || !validPaise(amount)))) ||
-      (value.periods !== undefined && (!Array.isArray(value.periods) || value.periods.length > 500 || value.periods.some(period => !isRecord(period) || !validId(period.id) || typeof period.name !== "string" || period.name.length > 60 || typeof period.startDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(period.startDate) || (period.endDate !== "" && (typeof period.endDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(period.endDate) || period.endDate < period.startDate)) || !validPaise(period.budget)))) ||
+      (value.periods !== undefined && (!Array.isArray(value.periods) || value.periods.length > 500 || value.periods.some(period => !isRecord(period) || !validId(period.id) || typeof period.name !== "string" || period.name.length > 60 || typeof period.startDate !== "string" || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(period.startDate) || (period.endDate !== "" && (typeof period.endDate !== "string" || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(period.endDate) || period.endDate < period.startDate)) || !validPaise(period.budget)))) ||
       !Array.isArray(value.expenses) || value.expenses.length > 5000 ||
       (value.borrowings !== undefined && (!Array.isArray(value.borrowings) || value.borrowings.length > 5000)) ||
       (value.legacyBorrowed !== undefined && !validPaise(value.legacyBorrowed))) return null;
@@ -172,7 +172,7 @@ export const PUT: APIRoute = async ({ request }) => {
     const client = await getMongoClient();
     const userId = user.id;
     const now = new Date().toISOString();
-    const isEmpty = state.budget === 0 && Object.values(state.monthlyBudgets || {}).every(value => value === 0) && state.borrowed === 0 && state.people.length === 0 && state.expenses.length === 0;
+    const isEmpty = state.budget === 0 && Object.values(state.monthlyBudgets || {}).every(value => value === 0) && (state.periods || []).length === 0 && state.borrowed === 0 && state.people.length === 0 && state.expenses.length === 0;
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
