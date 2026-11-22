@@ -8,10 +8,11 @@ export const maxDuration = 30;
 
 type Person = { id: string; name: string };
 type Allocation = { personId: string; name: string; amount: number };
-type Expense = { id: string; name: string; amount: number; allocations: Allocation[]; createdAt: string };
-type Borrowing = { id: string; amount: number; createdAt: string; lender?: string };
+type Expense = { id: string; name: string; amount: number; allocations: Allocation[]; createdAt: string; periodId?: string };
+type Borrowing = { id: string; amount: number; createdAt: string; lender?: string; periodId?: string };
 type MonthlyBudgets = Record<string, number>;
-type MessculatorState = { budget: number; monthlyBudgets?: MonthlyBudgets; borrowed: number; legacyBorrowed: number; borrowings: Borrowing[]; people: Person[]; expenses: Expense[] };
+type CalculationPeriod = { id: string; name: string; startDate: string; endDate: string; budget: number; legacyMonth?: string };
+type MessculatorState = { budget: number; monthlyBudgets?: MonthlyBudgets; periods?: CalculationPeriod[]; borrowed: number; legacyBorrowed: number; borrowings: Borrowing[]; people: Person[]; expenses: Expense[] };
 
 const COLLECTIONS = {
   budgets: "messculator_budgets",
@@ -62,6 +63,7 @@ function parseState(value: unknown): MessculatorState | null {
   if (!isRecord(value) || !validPaise(value.budget) || !validPaise(value.borrowed) ||
       !Array.isArray(value.people) || value.people.length > 100 ||
       (value.monthlyBudgets !== undefined && (!isRecord(value.monthlyBudgets) || Object.entries(value.monthlyBudgets).length > 120 || Object.entries(value.monthlyBudgets).some(([month, amount]) => !validMonthKey(month) || !validPaise(amount)))) ||
+      (value.periods !== undefined && (!Array.isArray(value.periods) || value.periods.length > 500 || value.periods.some(period => !isRecord(period) || !validId(period.id) || typeof period.name !== "string" || period.name.length > 60 || typeof period.startDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(period.startDate) || (period.endDate !== "" && (typeof period.endDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(period.endDate) || period.endDate < period.startDate)) || !validPaise(period.budget)))) ||
       !Array.isArray(value.expenses) || value.expenses.length > 5000 ||
       (value.borrowings !== undefined && (!Array.isArray(value.borrowings) || value.borrowings.length > 5000)) ||
       (value.legacyBorrowed !== undefined && !validPaise(value.legacyBorrowed))) return null;
@@ -99,19 +101,19 @@ function parseState(value: unknown): MessculatorState | null {
     if (allocated !== item.amount) return null;
     splitCount += allocations.length;
     if (splitCount > 100_000) return null;
-    expenses.push({ id: item.id, name: item.name.trim(), amount: item.amount, allocations, createdAt: item.createdAt });
+    expenses.push({ id: item.id, name: item.name.trim(), amount: item.amount, allocations, createdAt: item.createdAt, ...(validId(item.periodId) ? { periodId: item.periodId } : {}) });
   }
 
   const borrowings: Borrowing[] = [];
   const borrowingIds = new Set<string>();
   for (const item of (Array.isArray(value.borrowings) ? value.borrowings : [])) {
     if (!isRecord(item) || !validId(item.id) || borrowingIds.has(item.id) || !validPaise(item.amount, false) || !validDate(item.createdAt) || (item.lender !== undefined && (typeof item.lender !== "string" || item.lender.trim().length > 80))) return null;
-    borrowingIds.add(item.id); borrowings.push({ id: item.id, amount: item.amount, createdAt: item.createdAt, ...(typeof item.lender === "string" && item.lender.trim() ? { lender: item.lender.trim() } : {}) });
+    borrowingIds.add(item.id); borrowings.push({ id: item.id, amount: item.amount, createdAt: item.createdAt, ...(typeof item.lender === "string" && item.lender.trim() ? { lender: item.lender.trim() } : {}), ...(validId(item.periodId) ? { periodId: item.periodId } : {}) });
   }
   const legacyBorrowed = value.legacyBorrowed === undefined ? (value.borrowings === undefined ? value.borrowed : 0) : value.legacyBorrowed;
   const borrowingTotal = borrowings.reduce((sum, item) => sum + item.amount, legacyBorrowed);
   if (!Number.isSafeInteger(borrowingTotal) || borrowingTotal !== value.borrowed) return null;
-  return { budget: value.budget, monthlyBudgets: (value.monthlyBudgets as MonthlyBudgets | undefined) || {}, borrowed: value.borrowed, legacyBorrowed, borrowings, people, expenses };
+  return { budget: value.budget, monthlyBudgets: (value.monthlyBudgets as MonthlyBudgets | undefined) || {}, periods: (Array.isArray(value.periods) ? value.periods : []) as CalculationPeriod[], borrowed: value.borrowed, legacyBorrowed, borrowings, people, expenses };
 }
 
 export const GET: APIRoute = async ({ request }) => {
@@ -138,13 +140,14 @@ export const GET: APIRoute = async ({ request }) => {
     const state: MessculatorState = {
       budget: Number(budget?.budgetPaise) || 0,
       monthlyBudgets: isRecord(budget?.monthlyBudgets) ? Object.fromEntries(Object.entries(budget.monthlyBudgets).filter(([month, amount]) => validMonthKey(month) && validPaise(amount))) as MonthlyBudgets : {},
+      periods: Array.isArray(budget?.periods) ? budget.periods as CalculationPeriod[] : [],
       borrowed: borrowings.reduce((sum, row) => sum + (Number(row.amountPaise) || 0), 0),
       legacyBorrowed,
-      borrowings: borrowingHistory.map(row => ({ ...row, ...(typeof borrowings.find(item => String(item.id) === row.id)?.lender === "string" ? { lender: String(borrowings.find(item => String(item.id) === row.id)?.lender).slice(0, 80) } : {}) })),
+      borrowings: borrowingHistory.map(row => ({ ...row, ...(typeof borrowings.find(item => String(item.id) === row.id)?.lender === "string" ? { lender: String(borrowings.find(item => String(item.id) === row.id)?.lender).slice(0, 80) } : {}), ...(typeof borrowings.find(item => String(item.id) === row.id)?.periodId === "string" ? { periodId: String(borrowings.find(item => String(item.id) === row.id)?.periodId) } : {}) })),
       people: people.map(row => ({ id: String(row.id), name: String(row.name) })),
       expenses: expenses.map(row => ({
         id: String(row.id), name: String(row.name || ""), amount: Number(row.amountPaise) || 0,
-        createdAt: String(row.createdAt), allocations: splitMap.get(String(row.id)) || []
+        createdAt: String(row.createdAt), ...(typeof row.periodId === "string" ? { periodId: row.periodId } : {}), allocations: splitMap.get(String(row.id)) || []
       }))
     };
     const exists = Boolean(budget || people.length || expenses.length || borrowings.length);
@@ -190,7 +193,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
         await budgets.updateOne(
           { userId },
-          { $set: { budgetPaise: state.budget, monthlyBudgets: state.monthlyBudgets || {}, updatedAt: now }, $setOnInsert: { userId, createdAt: now } },
+          { $set: { budgetPaise: state.budget, monthlyBudgets: state.monthlyBudgets || {}, periods: state.periods || [], updatedAt: now }, $setOnInsert: { userId, createdAt: now } },
           { upsert: true, session }
         );
 
@@ -204,7 +207,7 @@ export const PUT: APIRoute = async ({ request }) => {
         }
         if (state.expenses.length) {
           await expenses.insertMany(state.expenses.map(expense => ({
-            userId, id: expense.id, name: expense.name, amountPaise: expense.amount, createdAt: expense.createdAt
+            userId, id: expense.id, name: expense.name, amountPaise: expense.amount, createdAt: expense.createdAt, ...(expense.periodId ? { periodId: expense.periodId } : {})
           })), { session });
           const splitRows: Document[] = state.expenses.flatMap(expense => expense.allocations.map(allocation => ({
             userId, expenseId: expense.id, personId: allocation.personId,
@@ -216,7 +219,7 @@ export const PUT: APIRoute = async ({ request }) => {
           await borrowings.insertOne({ userId, id: "legacy-total", amountPaise: state.legacyBorrowed, updatedAt: now }, { session });
         }
         if (state.borrowings.length) {
-          await borrowings.insertMany(state.borrowings.map(item => ({ userId, id: item.id, amountPaise: item.amount, createdAt: item.createdAt, ...(item.lender ? { lender: item.lender } : {}) })), { session });
+          await borrowings.insertMany(state.borrowings.map(item => ({ userId, id: item.id, amountPaise: item.amount, createdAt: item.createdAt, ...(item.lender ? { lender: item.lender } : {}), ...(item.periodId ? { periodId: item.periodId } : {}) })), { session });
         }
       });
     } finally {
