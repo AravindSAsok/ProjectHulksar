@@ -38,8 +38,11 @@ The API creates the collections and their indexes on the first authenticated mes
 
 ### Monthly financial reports
 
-- Select a calendar month to review expenses, timestamped borrowing transactions, net cash movement, transaction count and per-person expense shares. Expense history follows the selected month; top-level budget and cash balances remain all-time totals.
-- New borrowing transactions are stored individually with timestamps. Old aggregate borrowing is preserved in all-time totals but is not attributed to a month because its historical transaction dates are unavailable.
+- The month selector is the active workspace: each calendar month has its own starting budget, expense list, borrowing list, totals and report. New expenses and borrowings are recorded in the selected month; choosing an older month loads its records for review and editing.
+- Expense amounts/names and borrowing amounts/lender names can be edited or removed from their selected month. Changing an expense amount redistributes its saved allocation evenly across its existing recipients.
+- Borrowing transactions include an optional “Borrowed from” name. Leaving it blank is supported and existing borrowing records remain valid.
+- New borrowing transactions are stored individually with timestamps and an optional lender name. Old aggregate borrowing is preserved but is not attributed to a month because its historical transaction dates are unavailable.
+- Monthly budgets are stored as a month-keyed map in the existing per-user budget document; no new collection or destructive migration is required. Existing single-budget records are assigned to the current month on first load.
 
 ### App launcher preferences
 
