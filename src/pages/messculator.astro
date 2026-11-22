@@ -83,6 +83,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   const makeId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
   const blank = () => ({budget:0,monthlyBudgets:{},periods:[],borrowed:0,legacyBorrowed:0,borrowings:[],people:[],expenses:[]});
   const currentMonthValue = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); };
+  const monthKey = (value) => { const date=new Date(value); return Number.isNaN(date.getTime())?"":date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0"); };
   const selectedPeriodId = () => $("report-month").value || state.periods?.[0]?.id || "";
   const activePeriod = () => (state.periods||[]).find(period=>period.id===selectedPeriodId()) || null;
   const dateForSelectedPeriod = () => { const period=activePeriod(), now=new Date(); if(!period)return now.toISOString(); const today=now.toISOString().slice(0,10); const chosen=today>=period.startDate&&(!period.endDate||today<=period.endDate)?today:period.startDate; return new Date(chosen+"T12:00:00").toISOString(); };
@@ -241,7 +242,6 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       setSyncStatus("Saved on this device · sync unavailable",true);
     }
   };
-  const monthKey = (value) => { const date=new Date(value); return Number.isNaN(date.getTime())?"":date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0"); };
   const totalSpent = () => state.expenses.reduce((sum,e)=>sum+Math.max(0,Number(e.amount)||0),0);
   const activePeople = () => state.people;
   const equalAllocations = (amount) => {
@@ -251,8 +251,10 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     return recipients.map((p,i)=>({personId:p.id,name:p.name,amount:base+(i<remainder?1:0)}));
   };
   const render = () => {
+    const previousPeriodId=$("report-month").value;
+    $("report-month").innerHTML=(state.periods||[]).map(item=>'<option value="'+escapeHtml(item.id)+'">'+escapeHtml(periodLabel(item))+'</option>').join("");
+    if(previousPeriodId&&(state.periods||[]).some(item=>item.id===previousPeriodId))$("report-month").value=previousPeriodId;else if(state.periods?.length)$("report-month").value=state.periods[state.periods.length-1].id;
     const period=activePeriod(), periodId=period?.id||""; const monthExpenses=state.expenses.filter(e=>e.periodId===periodId); const monthBorrowings=(state.borrowings||[]).filter(b=>b.periodId===periodId); const spent=monthExpenses.reduce((n,e)=>n+(Number(e.amount)||0),0), budget=Number(period?.budget)||0, borrowed=monthBorrowings.reduce((n,b)=>n+(Number(b.amount)||0),0), left=budget-spent, cash=budget+borrowed-spent;
-    $("report-month").innerHTML=(state.periods||[]).map(item=>'<option value="'+escapeHtml(item.id)+'">'+escapeHtml(periodLabel(item))+'</option>').join(""); if(periodId)$("report-month").value=periodId;
     $("budget-display").textContent=money(budget); $("spent-total").textContent=money(spent); $("budget-left").textContent=money(left); $("borrowed-total").textContent=money(borrowed); $("borrow-summary-value").textContent=money(borrowed);
     $("cash-balance").textContent=money(cash); $("cash-balance").style.color=cash<0?"var(--mc-red)":"var(--mc-green)";
     $("cash-caption").textContent=cash<0?"Expenses exceed your budget and borrowed funds.":left<0?"You've used borrowed money to cover the overspend.":"Your budget and borrowed funds are available to spend.";
