@@ -54,13 +54,14 @@ function validId(value: unknown): value is string {
 function validPaise(value: unknown, allowZero = true): value is number {
   return Number.isSafeInteger(value) && Number(value) >= (allowZero ? 0 : 1) && Number(value) <= 1_000_000_000_000;
 }
+function validMonthKey(value: string): boolean { return value.length === 7 && value[4] === "-" && Number.isInteger(Number(value.slice(0, 4))) && Number(value.slice(5)) >= 1 && Number(value.slice(5)) <= 12; }
 function validDate(value: unknown): value is string {
   return typeof value === "string" && value.length <= 40 && Number.isFinite(Date.parse(value));
 }
 function parseState(value: unknown): MessculatorState | null {
   if (!isRecord(value) || !validPaise(value.budget) || !validPaise(value.borrowed) ||
       !Array.isArray(value.people) || value.people.length > 100 ||
-      (value.monthlyBudgets !== undefined && (!isRecord(value.monthlyBudgets) || Object.entries(value.monthlyBudgets).length > 120 || Object.entries(value.monthlyBudgets).some(([month, amount]) => !/^\\d{4}-(0[1-9]|1[0-2])$/.test(month) || !validPaise(amount)))) ||
+      (value.monthlyBudgets !== undefined && (!isRecord(value.monthlyBudgets) || Object.entries(value.monthlyBudgets).length > 120 || Object.entries(value.monthlyBudgets).some(([month, amount]) => !validMonthKey(month) || !validPaise(amount)))) ||
       !Array.isArray(value.expenses) || value.expenses.length > 5000 ||
       (value.borrowings !== undefined && (!Array.isArray(value.borrowings) || value.borrowings.length > 5000)) ||
       (value.legacyBorrowed !== undefined && !validPaise(value.legacyBorrowed))) return null;
@@ -136,7 +137,7 @@ export const GET: APIRoute = async ({ request }) => {
     const borrowingHistory = borrowings.filter(row => row.id !== "total" && row.id !== "legacy-total").map(row => ({ id: String(row.id), amount: Number(row.amountPaise) || 0, createdAt: String(row.createdAt || row.updatedAt || "") })).filter(row => validDate(row.createdAt));
     const state: MessculatorState = {
       budget: Number(budget?.budgetPaise) || 0,
-      monthlyBudgets: isRecord(budget?.monthlyBudgets) ? Object.fromEntries(Object.entries(budget.monthlyBudgets).filter(([month, amount]) => /^\\d{4}-(0[1-9]|1[0-2])$/.test(month) && validPaise(amount))) as MonthlyBudgets : {},
+      monthlyBudgets: isRecord(budget?.monthlyBudgets) ? Object.fromEntries(Object.entries(budget.monthlyBudgets).filter(([month, amount]) => validMonthKey(month) && validPaise(amount))) as MonthlyBudgets : {},
       borrowed: borrowings.reduce((sum, row) => sum + (Number(row.amountPaise) || 0), 0),
       legacyBorrowed,
       borrowings: borrowingHistory.map(row => ({ ...row, ...(typeof borrowings.find(item => String(item.id) === row.id)?.lender === "string" ? { lender: String(borrowings.find(item => String(item.id) === row.id)?.lender).slice(0, 80) } : {}) })),
