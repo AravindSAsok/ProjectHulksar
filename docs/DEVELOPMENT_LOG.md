@@ -209,3 +209,16 @@ Append-only record of meaningful implementation and operational changes.
 - The export button waits for the initial account fetch/sync promise before creating the download. The export is generated client-side as a UTF-8 `.txt` file; the app does not upload it.
 - No standalone local `npm run check` or manual browser download test was run in this session. The Vercel production build is the observed build verification; signed-in account data completeness and Android download behavior still need manual smoke testing.
 - This verification note is documentation-only and will produce a newer deployment SHA; the feature implementation itself is on the READY deployment above.
+
+
+## 2026-11-22 — User-defined messCulator calculation periods
+
+- Goal: replace automatic calendar-month budget cycles with calculation periods that each user starts when they choose.
+- Changed `src/pages/messculator.astro`: replaced the month picker with a calculation-period selector and a “New calculation” flow. A period has a required start date, optional end date and optional name. Budgets, expenses and borrowings are scoped to the selected period; the user explicitly decides when to start another calculation. Updated report/export wording to describe periods.
+- Changed `src/pages/api/messculator.ts`: added validated `periods` metadata to the existing budget document and optional `periodId` on expense/borrowing records. Existing user-scoped collections and snapshot transaction behavior remain unchanged.
+- Backward compatibility: existing `monthlyBudgets` are migrated client-side into `legacy-YYYY-MM` periods; old expense/borrowing records without `periodId` are assigned to their timestamp month. Existing amounts, splits, lender names and timestamps are retained. No collections were added, renamed or dropped.
+- Data/security impact: period data remains inside the existing authenticated per-user messCulator snapshot. Period dates, names and budgets are validated server-side; no account ownership or auth behavior was changed.
+- Documentation: updated README, AGENTS.md and agent.md with the manual-period contract and migration rules.
+- Verification: source-level review only. Local `npm run check`, `npm run build`, automated tests, authenticated legacy-data migration, cross-device persistence and mobile interaction tests have not been run in this GitHub-connected session.
+- Commits: implementation changes pushed sequentially to `main`; documentation commits and exact production deployment verification are pending.
+- Remaining risks: period summaries/export and historical data should be smoke-tested with an authenticated account containing pre-existing monthly records. Shared people list remains account-wide rather than period-specific.
