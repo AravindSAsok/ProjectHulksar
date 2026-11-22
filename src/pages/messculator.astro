@@ -88,6 +88,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   let cloudReady = false;
   let localRevision = 0;
   let cloudQueue = Promise.resolve();
+  let cloudInitialization = Promise.resolve();
   try { const saved=JSON.parse(localStorage.getItem(KEY)||"null"); if(saved&&typeof saved==="object") { state={...blank(),...saved,monthlyBudgets:saved.monthlyBudgets&&typeof saved.monthlyBudgets==="object"?saved.monthlyBudgets:{},people:Array.isArray(saved.people)?saved.people:[],expenses:Array.isArray(saved.expenses)?saved.expenses:[],borrowings:Array.isArray(saved.borrowings)?saved.borrowings:[]}; if(!Array.isArray(saved.borrowings))state.legacyBorrowed=Number(saved.borrowed)||0; if(!Object.keys(state.monthlyBudgets).length&&Number(saved.budget)>0)state.monthlyBudgets[currentMonthValue()]=Number(saved.budget); } } catch {}
   const setSyncStatus = (label, error = false) => {
     const status=$("sync-status");
@@ -141,6 +142,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       "Expense records across all months: " + state.expenses.length,
       "Dated borrowing records across all months: " + (state.borrowings || []).length,
       "Months with saved budgets or transactions: " + orderedMonths.length,
+      "Total dated borrowed amount: " + moneyWithPaise((state.borrowings||[]).reduce((sum,item)=>sum+(Number(item.amount)||0),0)),
       "Legacy borrowed amount without a date: " + moneyWithPaise(state.legacyBorrowed),
       "",
       "CURRENT PEOPLE LIST",
@@ -190,7 +192,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     anchor.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
-  $("export-data").addEventListener("click",exportAllData);
+  $("export-data").addEventListener("click",async()=>{await cloudInitialization;exportAllData();});
 
   const hasLocalData = () => state.budget>0||Object.values(state.monthlyBudgets||{}).some(v=>Number(v)>0)||state.borrowed>0||state.people.length>0||state.expenses.length>0;
   const save = () => {
@@ -307,6 +309,6 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   $("confirm-reset").addEventListener("click",()=>{state=blank();save();render();$("confirm-dialog").close();$("expense-form").reset();$("borrow-form").reset();buildCustomFields();});
   document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>btn.closest("dialog").close()));
   buildCustomFields();render();
-  initializeCloud().finally(()=>{if(!state.budget&&!state.borrowed&&!state.people.length&&!state.expenses.length)setTimeout(()=>$("budget-dialog").showModal(),250);});
+  cloudInitialization=initializeCloud().finally(()=>{if(!state.budget&&!state.borrowed&&!state.people.length&&!state.expenses.length)setTimeout(()=>$("budget-dialog").showModal(),250);});
 })();
 </script>
