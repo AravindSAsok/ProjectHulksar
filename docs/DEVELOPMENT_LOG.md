@@ -191,3 +191,14 @@ Append-only record of meaningful implementation and operational changes.
 - Vercel's production build is the build verification for that exact implementation SHA. A separate local `npm run check`, `npm run build`, and automated test run were not performed in this session.
 - Authenticated month-to-month read/write, historical editing, lender persistence, and interactive switching still require a signed-in browser/device smoke test; build readiness alone does not prove those live data flows.
 - A documentation-only verification note is being committed after the successful implementation deployment; recheck the deployment for the final documentation SHA before reporting the final release state.
+
+
+## 2026-11-22 — Export all messCulator data as readable TXT
+- Goal: let a user download a portable plain-text copy of all messCulator records that a person or language model can understand without needing the app.
+- Changed `src/pages/messculator.astro`: added an “Export all data (.txt)” action in the monthly report. The client creates a UTF-8 text file locally; it includes account-wide context, instructions for interpreting the data, current people, all month summaries, monthly budgets, every expense and its per-person allocations, all dated borrowings and optional lender names, and legacy undated borrowed money. Records include stable IDs, month keys, ISO timestamps, INR values and exact integer paise.
+- Export covers every available month, not just the selected month. It waits for the initial account/cloud load to finish so a signed-in user does not accidentally export only a pre-sync local snapshot. It does not send the generated file to a server.
+- Updated `README.md`, `AGENTS.md`, and `agent.md` with the export contents, privacy behavior and implementation contract.
+- Data/security impact: no schema/API/collection changes. Export uses the already-loaded state belonging to the current signed-in account or local device; no additional data is requested or uploaded. The downloaded file contains personal names and financial details and should be handled carefully.
+- Verification: source-level inspection only so far. Local `npm run check`, `npm run build`, browser download verification, and authenticated multi-month export comparison have not yet been run in this GitHub-connected session.
+- Commit/deployment: implementation and documentation are being pushed directly to `main`; production deployment status for the final commit is pending.
+- Remaining risks: browser download behavior and completeness should be smoke-tested on desktop and Android, including signed-in cloud data and offline local-only data.
