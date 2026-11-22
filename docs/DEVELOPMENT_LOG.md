@@ -222,3 +222,10 @@ Append-only record of meaningful implementation and operational changes.
 - Verification: source-level review only. Local `npm run check`, `npm run build`, automated tests, authenticated legacy-data migration, cross-device persistence and mobile interaction tests have not been run in this GitHub-connected session.
 - Commits: implementation changes pushed sequentially to `main`; documentation commits and exact production deployment verification are pending.
 - Remaining risks: period summaries/export and historical data should be smoke-tested with an authenticated account containing pre-existing monthly records. Shared people list remains account-wide rather than period-specific.
+
+
+### Verification update — user-defined calculation periods
+- Latest implementation commit `98b26a0e54916da574e1bd37807b8a0c89bcbd08` reached Vercel production state `READY`; production alias: https://projecthulksar.vercel.app.
+- Vercel build logs confirm `npm run build` completed and the server/client bundles were generated successfully.
+- The change preserves legacy month budgets and transactions by migrating them into `legacy-YYYY-MM` periods, including months that contain transactions but had no saved budget. Existing expense splits, borrowing amounts, lender names and timestamps remain intact.
+- Local `npm run check`, standalone local `npm run build`, authenticated account migration/persistence tests and Android/desktop interaction tests were not run in this session. Complete those smoke tests before relying on the new flow for critical financial records.
