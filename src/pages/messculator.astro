@@ -5,7 +5,7 @@ import Layout from "../layouts/Layout.astro";
   <main class="mc-shell">
     <header class="mc-topbar">
       <a class="mc-brand" href="/" aria-label="Back to Hulksar"><span class="mc-mark">H</span><span>HULK<span>SAR</span></span></a>
-      <a class="mc-back" href="/apps">Customize apps</a><a class="mc-back" href="/">← Hulksar</a>
+      <a class="mc-back" href="/apps">Customize apps</a><a class="mc-back mc-app-switch" href="/?app=hulksar">← Hulksar</a>
     </header>
     <section class="mc-hero">
       <div><p class="mc-eyebrow">HULKSAR MINI APP</p><h1>mess<span>Culator</span></h1><p class="mc-subtitle">One budget. Every expense. Everyone accounted for.</p></div>
@@ -21,7 +21,7 @@ import Layout from "../layouts/Layout.astro";
       <article class="mc-card mc-balance-card"><p class="mc-label">AVAILABLE CASH</p><strong id="cash-balance">₹0.00</strong><p id="cash-caption">Set a budget to get started.</p><div class="mc-borrow-line"><span>Borrowed funds still available</span><strong id="borrowed-left">₹0.00</strong></div></article>
     </section>
     <section class="mc-card mc-monthly-card" aria-labelledby="monthly-title">
-      <div class="mc-section-head"><div><p class="mc-label">FINANCIAL OVERVIEW</p><h2 id="monthly-title">Monthly report</h2></div><label class="mc-month-picker">Choose month<input id="report-month" type="month" /></label></div>
+      <div class="mc-section-head"><div><p class="mc-label">FINANCIAL OVERVIEW</p><h2 id="monthly-title">Monthly report</h2></div><label class="mc-month-picker">Working month<input id="report-month" type="month" /><small>Each month starts with its own budget and entries. Select an older month to review or edit it.</small></label></div>
       <div class="mc-month-stats"><div><small>Expenses this month</small><strong id="month-expenses">₹0.00</strong></div><div><small>Borrowed this month</small><strong id="month-borrowed">₹0.00</strong></div><div><small>Net cash movement</small><strong id="month-net">₹0.00</strong></div><div><small>Transactions</small><strong id="month-count">0</strong></div></div>
       <div class="mc-month-lower"><div><p class="mc-label">PERSON-WISE MONTHLY SHARE</p><div id="month-people" class="mc-month-people"><p class="mc-empty-small">No expenses in this month.</p></div></div><div><p class="mc-label">BORROWING HISTORY</p><div id="month-borrowing-list" class="mc-month-people"><p class="mc-empty-small">No borrowing recorded this month.</p></div><p id="legacy-borrowing-note" class="mc-helper" hidden></p></div></div>
     </section>
@@ -49,7 +49,7 @@ import Layout from "../layouts/Layout.astro";
         <article class="mc-card">
           <div class="mc-section-head"><div><p class="mc-label">EXTRA FUNDS</p><h2>Borrowed money</h2></div><span class="mc-icon">↗</span></div>
           <p class="mc-helper mc-helper-top">Record money borrowed to cover expenses. It increases available cash, but stays separate from your original budget.</p>
-          <form id="borrow-form" class="mc-borrow-form"><label class="mc-sr" for="borrow-amount">Borrowed amount</label><input id="borrow-amount" type="number" min="0.01" step="0.01" placeholder="Amount borrowed" required /><button class="mc-secondary" type="submit">＋ Add borrowed money</button></form>
+          <form id="borrow-form" class="mc-borrow-form"><label class="mc-sr" for="borrow-amount">Borrowed amount</label><input id="borrow-amount" type="number" min="0.01" step="0.01" placeholder="Amount borrowed" required /><label class="mc-sr" for="borrow-lender">Borrowed from (optional)</label><input id="borrow-lender" maxlength="80" placeholder="Borrowed from (optional)" /><button class="mc-secondary" type="submit">＋ Add borrowed money</button></form>
           <div class="mc-borrow-summary"><span>Total borrowed</span><strong id="borrow-summary-value">₹0.00</strong></div>
         </article>
         <article class="mc-card">
@@ -79,12 +79,15 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   const toCents = (v) => Math.round((Number(v)||0)*100);
   const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const makeId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
-  const blank = () => ({budget:0,borrowed:0,legacyBorrowed:0,borrowings:[],people:[],expenses:[]});
+  const blank = () => ({budget:0,monthlyBudgets:{},borrowed:0,legacyBorrowed:0,borrowings:[],people:[],expenses:[]});
+  const currentMonthValue = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); };
+  const selectedMonth = () => $("report-month").value || currentMonthValue();
+  const dateForSelectedMonth = () => { const m=selectedMonth(), now=new Date(), current=m===currentMonthValue(); return new Date(Number(m.slice(0,4)),Number(m.slice(5,7))-1,current?now.getDate():1,12,0,0).toISOString(); };
   let state = blank();
   let cloudReady = false;
   let localRevision = 0;
   let cloudQueue = Promise.resolve();
-  try { const saved=JSON.parse(localStorage.getItem(KEY)||"null"); if(saved&&typeof saved==="object") { state={...blank(),...saved,people:Array.isArray(saved.people)?saved.people:[],expenses:Array.isArray(saved.expenses)?saved.expenses:[],borrowings:Array.isArray(saved.borrowings)?saved.borrowings:[]}; if(!Array.isArray(saved.borrowings))state.legacyBorrowed=Number(saved.borrowed)||0; } } catch {}
+  try { const saved=JSON.parse(localStorage.getItem(KEY)||"null"); if(saved&&typeof saved==="object") { state={...blank(),...saved,monthlyBudgets:saved.monthlyBudgets&&typeof saved.monthlyBudgets==="object"?saved.monthlyBudgets:{},people:Array.isArray(saved.people)?saved.people:[],expenses:Array.isArray(saved.expenses)?saved.expenses:[],borrowings:Array.isArray(saved.borrowings)?saved.borrowings:[]}; if(!Array.isArray(saved.borrowings))state.legacyBorrowed=Number(saved.borrowed)||0; if(!Object.keys(state.monthlyBudgets).length&&Number(saved.budget)>0)state.monthlyBudgets[currentMonthValue()]=Number(saved.budget); } } catch {}
   const setSyncStatus = (label, error = false) => {
     const status=$("sync-status");
     if(!status)return;
@@ -105,6 +108,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   };
   const hasLocalData = () => state.budget>0||state.borrowed>0||state.people.length>0||state.expenses.length>0;
   const save = () => {
+    state.budget=Number(state.monthlyBudgets?.[selectedMonth()])||0;
     localRevision++;
     const snapshot=JSON.stringify(state);
     try { localStorage.setItem(KEY,snapshot); } catch { alert("This device could not save the budget. Check available browser storage."); return; }
@@ -153,7 +157,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     return recipients.map((p,i)=>({personId:p.id,name:p.name,amount:base+(i<remainder?1:0)}));
   };
   const render = () => {
-    const spent=totalSpent(), budget=Number(state.budget)||0, borrowed=Number(state.borrowed)||0, left=budget-spent, cash=budget+borrowed-spent;
+    const month=$("report-month").value; const monthExpenses=state.expenses.filter(e=>monthKey(e.createdAt)===month); const monthBorrowings=(state.borrowings||[]).filter(b=>monthKey(b.createdAt)===month); const spent=monthExpenses.reduce((n,e)=>n+(Number(e.amount)||0),0), budget=Number(state.monthlyBudgets?.[month])||0, borrowed=monthBorrowings.reduce((n,b)=>n+(Number(b.amount)||0),0), left=budget-spent, cash=budget+borrowed-spent;
     $("budget-display").textContent=money(budget); $("spent-total").textContent=money(spent); $("budget-left").textContent=money(left); $("borrowed-total").textContent=money(borrowed); $("borrow-summary-value").textContent=money(borrowed);
     $("cash-balance").textContent=money(cash); $("cash-balance").style.color=cash<0?"var(--mc-red)":"var(--mc-green)";
     $("cash-caption").textContent=cash<0?"Expenses exceed your budget and borrowed funds.":left<0?"You've used borrowed money to cover the overspend.":"Your budget and borrowed funds are available to spend.";
@@ -161,14 +165,11 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     $("spent-label").textContent=money(spent)+" spent"; $("budget-percent").textContent=budget?Math.round(spent/budget*100)+"%":"0%";
     $("budget-progress").style.width=(budget?Math.min(100,spent/budget*100):0)+"%"; $("budget-progress").style.background=left<0?"var(--mc-red)":"#e9a4b0";
     $("people-list").innerHTML=state.people.length?state.people.map(p=>'<span class="mc-person-chip">'+escapeHtml(p.name)+'<button type="button" data-remove-person="'+escapeHtml(p.id)+'" aria-label="Remove '+escapeHtml(p.name)+'">×</button></span>').join(""):'<p class="mc-empty-small">No people added yet. Add people to split expenses.</p>';
-    const month=$("report-month").value;
-    const visibleExpenses=state.expenses.filter(e=>monthKey(e.createdAt)===month);
+    const visibleExpenses=monthExpenses;
     $("expense-count").textContent=visibleExpenses.length+" item"+(visibleExpenses.length===1?"":"s");
     $("expense-list").innerHTML=visibleExpenses.length?visibleExpenses.slice().reverse().map(e=>'<div class="mc-expense"><div class="mc-expense-main"><strong>'+escapeHtml(e.name||"Unnamed expense")+'</strong><small>'+escapeHtml((e.allocations||[]).map(a=>a.name).join(", ")||"No split details")+'</small></div><div class="mc-expense-side"><strong>'+money(e.amount)+'</strong><button type="button" data-delete-expense="'+escapeHtml(e.id)+'">Remove</button></div></div>').join(""):'<div class="mc-empty"><span>◌</span><strong>No expenses this month</strong><p>Choose another month or add an expense.</p></div>';
-    const monthExpenses=state.expenses.filter(e=>String(e.createdAt||"").slice(0,7)===month);
-    const monthBorrowings=(state.borrowings||[]).filter(b=>monthKey(b.createdAt)===month);
-    const monthSpent=monthExpenses.reduce((n,e)=>n+(Number(e.amount)||0),0);
-    const monthBorrowed=monthBorrowings.reduce((n,b)=>n+(Number(b.amount)||0),0);
+    const monthSpent=spent;
+    const monthBorrowed=borrowed;
     $("month-expenses").textContent=money(monthSpent); $("month-borrowed").textContent=money(monthBorrowed); $("month-net").textContent=money(monthBorrowed-monthSpent); $("month-net").style.color=monthBorrowed-monthSpent<0?"var(--mc-red)":"var(--mc-green)"; $("month-count").textContent=String(monthExpenses.length+monthBorrowings.length);
     const monthTotals=new Map();
     monthExpenses.forEach(e=>(e.allocations||[]).forEach(a=>{const key=a.personId||a.name;const prev=monthTotals.get(key)||{name:a.name,amount:0};prev.amount+=Number(a.amount)||0;monthTotals.set(key,prev);}));
@@ -193,7 +194,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     $("custom-total").textContent="Allocated: "+money(sum);
   };
   $("edit-budget").addEventListener("click",()=>{$("budget-amount").value=(state.budget/100).toFixed(2);$("budget-dialog").showModal();});
-  $("budget-form").addEventListener("submit",e=>{e.preventDefault();state.budget=toCents($("budget-amount").value);save();render();$("budget-dialog").close();});
+  $("budget-form").addEventListener("submit",e=>{e.preventDefault();state.monthlyBudgets=state.monthlyBudgets||{};state.monthlyBudgets[selectedMonth()]=toCents($("budget-amount").value);state.budget=state.monthlyBudgets[selectedMonth()];save();render();$("budget-dialog").close();});
   $("expense-form").addEventListener("submit",e=>{
     e.preventDefault(); const amount=toCents($("expense-amount").value), name=$("expense-name").value.trim();
     if(amount<=0){$("expense-status").textContent="Enter an expense amount greater than zero.";return;}
@@ -204,14 +205,14 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       const sum=allocations.reduce((n,a)=>n+a.amount,0);
       if(sum!==amount){$("expense-status").textContent="Individual shares must add up exactly to "+money(amount)+".";return;}
     }else allocations=equalAllocations(amount);
-    state.expenses.push({id:makeId(),name,amount,allocations,createdAt:new Date().toISOString()});save();render();$("expense-form").reset();$("expense-status").textContent="Expense added.";buildCustomFields();
+    state.expenses.push({id:makeId(),name,amount,allocations,createdAt:dateForSelectedMonth()});save();render();$("expense-form").reset();$("expense-status").textContent="Expense added.";buildCustomFields();
   });
   $("split-mode").addEventListener("change",()=>{buildCustomFields();render();});
   $("custom-fields").addEventListener("input",updateCustomTotal);
   $("person-form").addEventListener("submit",e=>{e.preventDefault();const name=$("person-name").value.trim();if(!name)return;if(state.people.some(p=>p.name.toLowerCase()===name.toLowerCase())){ $("person-name").setCustomValidity("This person is already added.");$("person-name").reportValidity();return; }$("person-name").setCustomValidity("");state.people.push({id:makeId(),name});save();render();buildCustomFields();$("person-form").reset();});
   $("people-list").addEventListener("click",e=>{const btn=e.target.closest("[data-remove-person]");if(!btn)return;const person=state.people.find(p=>p.id===btn.dataset.removePerson);if(!person)return;if(!confirm("Remove "+person.name+" from the current people list? Existing expense records will keep their saved split."))return;state.people=state.people.filter(p=>p.id!==person.id);save();render();buildCustomFields();});
-  $("borrow-form").addEventListener("submit",e=>{e.preventDefault();const amount=toCents($("borrow-amount").value);if(amount<=0)return;state.borrowings.push({id:makeId(),amount,createdAt:new Date().toISOString()});state.borrowed=(Number(state.borrowed)||0)+amount;save();render();$("borrow-form").reset();});
-  const currentMonth=new Date(); $("report-month").value=currentMonth.getFullYear()+"-"+String(currentMonth.getMonth()+1).padStart(2,"0"); $("report-month").addEventListener("change",render);
+  $("borrow-form").addEventListener("submit",e=>{e.preventDefault();const amount=toCents($("borrow-amount").value);if(amount<=0)return;state.borrowings.push({id:makeId(),amount,createdAt:dateForSelectedMonth(),lender:$("borrow-lender").value.trim().slice(0,80)});state.borrowed=(Number(state.borrowed)||0)+amount;save();render();$("borrow-form").reset();});
+  $("report-month").value=currentMonthValue(); $("report-month").addEventListener("change",()=>{state.budget=Number(state.monthlyBudgets?.[selectedMonth()])||0;render();buildCustomFields();});
   $("expense-list").addEventListener("click",e=>{const btn=e.target.closest("[data-delete-expense]");if(!btn)return;const expense=state.expenses.find(x=>x.id===btn.dataset.deleteExpense);if(!expense||!confirm("Remove this expense?"))return;state.expenses=state.expenses.filter(x=>x.id!==expense.id);save();render();});
   $("reset-app").addEventListener("click",()=>$("confirm-dialog").showModal());
   $("confirm-reset").addEventListener("click",()=>{state=blank();save();render();$("confirm-dialog").close();$("expense-form").reset();$("borrow-form").reset();buildCustomFields();});
