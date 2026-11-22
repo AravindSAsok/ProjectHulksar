@@ -21,10 +21,10 @@ import Layout from "../layouts/Layout.astro";
       <article class="mc-card mc-balance-card"><p class="mc-label">AVAILABLE CASH</p><strong id="cash-balance">₹0.00</strong><p id="cash-caption">Set a budget to get started.</p><div class="mc-borrow-line"><span>Borrowed funds still available</span><strong id="borrowed-left">₹0.00</strong></div></article>
     </section>
     <section class="mc-card mc-monthly-card" aria-labelledby="monthly-title">
-      <div class="mc-section-head"><div><p class="mc-label">FINANCIAL OVERVIEW</p><h2 id="monthly-title">Monthly report</h2></div><label class="mc-month-picker">Active calculation<select id="report-month"></select><button class="mc-secondary" id="new-period" type="button">＋ New calculation</button><small>Choose when each budget starts and ends. You decide when to create a new calculation.</small></label></div>
-      <div class="mc-month-stats"><div><small>Expenses this month</small><strong id="month-expenses">₹0.00</strong></div><div><small>Borrowed this month</small><strong id="month-borrowed">₹0.00</strong></div><div><small>Net cash movement</small><strong id="month-net">₹0.00</strong></div><div><small>Transactions</small><strong id="month-count">0</strong></div></div>
-      <div class="mc-export-row"><div><strong>Take your data with you</strong><p>Export every month, expense, split, borrowing and budget as a readable text file.</p></div><button class="mc-secondary" id="export-data" type="button">↓ Export all data (.txt)</button></div>
-      <div class="mc-month-lower"><div><p class="mc-label">PERSON-WISE MONTHLY SHARE</p><div id="month-people" class="mc-month-people"><p class="mc-empty-small">No expenses in this month.</p></div></div><div><p class="mc-label">BORROWING HISTORY</p><div id="month-borrowing-list" class="mc-month-people"><p class="mc-empty-small">No borrowing recorded this month.</p></div><p id="legacy-borrowing-note" class="mc-helper" hidden></p></div></div>
+      <div class="mc-section-head"><div><p class="mc-label">FINANCIAL OVERVIEW</p><h2 id="monthly-title">Calculation report</h2></div><label class="mc-month-picker">Active calculation<select id="report-month"></select><button class="mc-secondary" id="new-period" type="button">＋ New calculation</button><small>Choose when each budget starts and ends. You decide when to create a new calculation.</small></label></div>
+      <div class="mc-month-stats"><div><small>Expenses in this period</small><strong id="month-expenses">₹0.00</strong></div><div><small>Borrowed in this period</small><strong id="month-borrowed">₹0.00</strong></div><div><small>Net cash movement</small><strong id="month-net">₹0.00</strong></div><div><small>Transactions</small><strong id="month-count">0</strong></div></div>
+      <div class="mc-export-row"><div><strong>Take your data with you</strong><p>Export every calculation period, expense, split, borrowing and budget as a readable text file.</p></div><button class="mc-secondary" id="export-data" type="button">↓ Export all data (.txt)</button></div>
+      <div class="mc-month-lower"><div><p class="mc-label">PERSON-WISE PERIOD SHARE</p><div id="month-people" class="mc-month-people"><p class="mc-empty-small">No expenses in this month.</p></div></div><div><p class="mc-label">BORROWING HISTORY</p><div id="month-borrowing-list" class="mc-month-people"><p class="mc-empty-small">No borrowing recorded this month.</p></div><p id="legacy-borrowing-note" class="mc-helper" hidden></p></div></div>
     </section>
     <section class="mc-main-grid">
       <div class="mc-column">
@@ -145,7 +145,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       "People currently in the shared people list: " + state.people.length,
       "Expense records across all months: " + state.expenses.length,
       "Dated borrowing records across all months: " + (state.borrowings || []).length,
-      "Months with saved budgets or transactions: " + orderedMonths.length,
+      "Calculation periods with saved budgets or transactions: " + orderedMonths.length,
       "Total dated borrowed amount: " + moneyWithPaise((state.borrowings||[]).reduce((sum,item)=>sum+(Number(item.amount)||0),0)),
       "Legacy borrowed amount without a date: " + moneyWithPaise(state.legacyBorrowed),
       "",
@@ -154,7 +154,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     ];
     if(state.people.length) state.people.forEach((person,index)=>lines.push((index+1)+". "+cleanText(person.name)+" [person ID: "+cleanText(person.id)+"]"));
     else lines.push("No people are currently saved.");
-    lines.push("", "MONTH-BY-MONTH SUMMARY", "----------------------");
+    lines.push("", "CALCULATION-PERIOD SUMMARY", "----------------------");
     if(orderedMonths.length){
       orderedMonths.forEach(month=>{
         const expenses=state.expenses.filter(item=>(item.periodId||"legacy-"+monthKey(item.createdAt))===month);
@@ -164,7 +164,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
         const borrowed=borrowings.reduce((sum,item)=>sum+(Number(item.amount)||0),0);
         lines.push(month+" | Starting budget: "+moneyWithPaise(budget)+" | Expenses: "+moneyWithPaise(spent)+" | Borrowed: "+moneyWithPaise(borrowed)+" | Net cash movement (borrowed minus expenses): "+moneyWithPaise(borrowed-spent)+" | Transactions: "+(expenses.length+borrowings.length));
       });
-    } else lines.push("No monthly budgets or dated transactions are saved.");
+    } else lines.push("No calculation periods or dated transactions are saved.");
     lines.push("", "CALCULATION PERIODS AND BUDGETS", "--------------------------------");
     if(orderedMonths.some(month=>state.periods?.some(period=>period.id===month)||Object.prototype.hasOwnProperty.call(state.monthlyBudgets||{},month))){
       orderedMonths.forEach(month=>{const period=state.periods?.find(item=>item.id===month);if(period)lines.push(period.id+" | "+periodLabel(period)+" | "+period.startDate+" to "+(period.endDate||"open-ended")+": "+moneyWithPaise(period.budget));else if(Object.prototype.hasOwnProperty.call(state.monthlyBudgets||{},month))lines.push(month+": "+moneyWithPaise(state.monthlyBudgets[month]));});
