@@ -113,3 +113,11 @@ Record each meaningful update in docs/DEVELOPMENT_LOG.md: date, summary, changed
 
 ## Completion report
 Every agent task must report: root cause or goal, files changed, user-visible behavior, data/security impact, checks actually run, checks not run, commit SHA/link, deployment URL/status if applicable, and known limitations. Be precise. Accuracy is more important than a green-looking report.
+
+
+## messCulator calculation periods
+
+- Calculation cycles are explicitly user-created, not calendar-month-driven. A user starts a new period at any time, supplies a required start date, may set an optional end date, and may give it an optional display name.
+- Each period owns its starting budget and receives new expenses/borrowings until another period is selected. Selecting an old period allows reviewing/editing its records. No automatic month rollover or reset is performed.
+- Persist period metadata and each transaction's `periodId` in the existing user-scoped messCulator state. Keep backward compatibility: migrate legacy `monthlyBudgets` and expense/borrowing records without `periodId` into `legacy-YYYY-MM` periods without deleting or changing amounts/timestamps. Continue to validate periods server-side and keep all reads/writes scoped to the authenticated user.
+- TXT export must enumerate user-defined periods and associate each expense/borrowing with its period, while preserving any legacy undated borrowing separately.
