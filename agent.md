@@ -46,13 +46,15 @@ Use the existing modules and storage abstractions. Do not introduce a second com
 - App preferences use `/api/app-preferences` and user-scoped `hulksar_app_preferences`, with localStorage fallback. Never trust a client-supplied userId.
 
 ## messCulator module
-- Monthly reports filter expenses and timestamped borrowing entries by calendar month. Legacy aggregate borrowed money stays in all-time totals but is not assigned to a month.
+- The month selector is the active workspace: monthly budgets are independent, and expenses/borrowings are filtered by their `createdAt` month. Past months remain editable; changing the selected month must not reset or overwrite another month. Legacy aggregate borrowed money remains unattributed because its date is unknown.
+- Borrowing entries accept an optional lender name (maximum 80 characters); blank and legacy missing values are valid.
 
 - Route: `src/pages/messculator.astro`; authenticated persistence API: `src/pages/api/messculator.ts`.
 - Uses five app-prefixed collections in the shared MongoDB Atlas database: `messculator_budgets`, `messculator_people`, `messculator_expenses`, `messculator_expense_splits`, and `messculator_borrowings`.
 - API derives ownership from `authenticateRequest`, validates incoming state and saves a complete per-user snapshot transactionally. The client serializes writes and retains localStorage as a fallback.
 - First-time local-to-cloud migration requires explicit confirmation; an existing account budget is not silently overwritten by device data.
 - Keep amounts as integer paise, validate that custom allocations sum exactly to each expense, and preserve historical allocation names when active people are removed.
+- Store independent month budgets in `monthlyBudgets` within the existing per-user budget document. Keep the full map when saving a selected month; never clear another month. Older single-budget records are assigned to the current month on first load.
 
 ## Shared database and collection naming
 - All mini-apps share the MongoDB Atlas database configured by `MONGODB_DB_NAME` (default `hulksar`); do not create a separate database per app.
