@@ -202,3 +202,10 @@ Append-only record of meaningful implementation and operational changes.
 - Verification: source-level inspection only so far. Local `npm run check`, `npm run build`, browser download verification, and authenticated multi-month export comparison have not yet been run in this GitHub-connected session.
 - Commit/deployment: implementation and documentation are being pushed directly to `main`; production deployment status for the final commit is pending.
 - Remaining risks: browser download behavior and completeness should be smoke-tested on desktop and Android, including signed-in cloud data and offline local-only data.
+
+
+### Verification update — 2026-11-22
+- Implementation commit `4a6bc2e71a08927a553654b0298f868428f74b62` has a successful Vercel production deployment (`READY`) with production aliases including https://projecthulksar.vercel.app. The deployment built the exact implementation commit containing the corrected UTF-8 line endings and BOM.
+- The export button waits for the initial account fetch/sync promise before creating the download. The export is generated client-side as a UTF-8 `.txt` file; the app does not upload it.
+- No standalone local `npm run check` or manual browser download test was run in this session. The Vercel production build is the observed build verification; signed-in account data completeness and Android download behavior still need manual smoke testing.
+- This verification note is documentation-only and will produce a newer deployment SHA; the feature implementation itself is on the READY deployment above.
