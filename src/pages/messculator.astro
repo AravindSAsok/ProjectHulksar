@@ -106,7 +106,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
     });
     return cloudQueue;
   };
-  const hasLocalData = () => state.budget>0||state.borrowed>0||state.people.length>0||state.expenses.length>0;
+  const hasLocalData = () => state.budget>0||Object.values(state.monthlyBudgets||{}).some(v=>Number(v)>0)||state.borrowed>0||state.people.length>0||state.expenses.length>0;
   const save = () => {
     state.budget=Number(state.monthlyBudgets?.[selectedMonth()])||0;
     localRevision++;
@@ -131,7 +131,9 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       }
       if(payload.exists){
         if(hasLocalData()&&JSON.stringify(state)!==JSON.stringify(payload.state)&&!confirm("A budget is already saved to your Hulksar account. Load it here? This replaces this device's local copy. Cancel keeps this device's budget without cloud sync.")){setSyncStatus("Saved on this device · cloud sync paused");return;}
-        state={...blank(),...payload.state,people:Array.isArray(payload.state?.people)?payload.state.people:[],expenses:Array.isArray(payload.state?.expenses)?payload.state.expenses:[],borrowings:Array.isArray(payload.state?.borrowings)?payload.state.borrowings:[],legacyBorrowed:Number(payload.state?.legacyBorrowed)||0};
+        state={...blank(),...payload.state,monthlyBudgets:payload.state?.monthlyBudgets&&typeof payload.state.monthlyBudgets==="object"?payload.state.monthlyBudgets:{},people:Array.isArray(payload.state?.people)?payload.state.people:[],expenses:Array.isArray(payload.state?.expenses)?payload.state.expenses:[],borrowings:Array.isArray(payload.state?.borrowings)?payload.state.borrowings:[],legacyBorrowed:Number(payload.state?.legacyBorrowed)||0};
+        if(!Object.keys(state.monthlyBudgets).length&&Number(payload.state?.budget)>0)state.monthlyBudgets[currentMonthValue()]=Number(payload.state.budget);
+        state.budget=Number(state.monthlyBudgets[selectedMonth()])||0;
         localStorage.setItem(KEY,JSON.stringify(state));
         render();
         buildCustomFields();
