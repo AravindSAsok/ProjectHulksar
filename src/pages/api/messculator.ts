@@ -169,7 +169,7 @@ export const PUT: APIRoute = async ({ request }) => {
     const client = await getMongoClient();
     const userId = user.id;
     const now = new Date().toISOString();
-    const isEmpty = state.budget === 0 && state.borrowed === 0 && state.people.length === 0 && state.expenses.length === 0;
+    const isEmpty = state.budget === 0 && Object.values(state.monthlyBudgets || {}).every(value => value === 0) && state.borrowed === 0 && state.people.length === 0 && state.expenses.length === 0;
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
