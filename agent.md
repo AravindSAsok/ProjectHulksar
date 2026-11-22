@@ -47,6 +47,7 @@ Use the existing modules and storage abstractions. Do not introduce a second com
 
 ## messCulator module
 - The month selector is the active workspace: monthly budgets are independent, and expenses/borrowings are filtered by their `createdAt` month. Past months remain editable; changing the selected month must not reset or overwrite another month. Legacy aggregate borrowed money remains unattributed because its date is unknown.
+- `Export all data (.txt)` is a client-side UTF-8 export of all months, budgets, people, expense allocations, dated borrowings/lender names and legacy undated borrowed money. Keep the export self-explanatory for humans and LLMs (schema notes, ISO timestamps, record IDs, INR and paise) and wait for initial cloud load; do not upload the file.
 - Borrowing entries accept an optional lender name (maximum 80 characters); blank and legacy missing values are valid.
 
 - Route: `src/pages/messculator.astro`; authenticated persistence API: `src/pages/api/messculator.ts`.
