@@ -200,7 +200,7 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
   };
   $("export-data").addEventListener("click",async()=>{await cloudInitialization;exportAllData();});
 
-  const hasLocalData = () => state.budget>0||(state.periods||[]).length>0||Object.values(state.monthlyBudgets||{}).some(v=>Number(v)>0)||state.borrowed>0||state.people.length>0||state.expenses.length>0;
+  const hasLocalData = () => state.budget>0||(state.periods||[]).some(period=>Number(period.budget)>0||Boolean(period.name)||Boolean(period.endDate))||Object.values(state.monthlyBudgets||{}).some(v=>Number(v)>0)||state.borrowed>0||state.people.length>0||state.expenses.length>0;
   const save = () => {
     state.budget=Number(activePeriod()?.budget)||0;
     localRevision++;
