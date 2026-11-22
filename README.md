@@ -61,7 +61,7 @@ The API creates the collections and their indexes on the first authenticated mes
 
 ## Release verification note
 
-The app launcher and monthly report feature set was built successfully by Vercel for commit `286fba35b4a24e8ab97f9669508a7ef27b0f95bf`. The later main-branch refinements are recorded in `docs/DEVELOPMENT_LOG.md`; check the latest deployment SHA before assuming every refinement is live.
+The latest messCulator user-defined calculation-period implementation was built successfully by Vercel for commit `98b26a0e54916da574e1bd37807b8a0c89bcbd08` and is deployed to the production alias `https://projecthulksar.vercel.app`. See `docs/DEVELOPMENT_LOG.md` for migration behavior and remaining manual smoke tests.
 
 ## Progress tracking for contributors
 
