@@ -6,7 +6,7 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
 
 <Layout title="Hulksar — Your life, in sync">
 <script is:inline>
-(() => { const key="hulksar-app-preferences-v1"; const go=p=>{if(p?.defaultApp==="messculator"&&location.pathname==="/")location.replace("/messculator")}; try{go(JSON.parse(localStorage.getItem(key)||"null"))}catch{} fetch("/api/app-preferences",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.preferences){localStorage.setItem(key,JSON.stringify(d.preferences));go(d.preferences)}}).catch(()=>{}); })();
+(() => { const key="hulksar-app-preferences-v1"; const go=p=>{const explicit=new URLSearchParams(location.search).get("app");if(location.pathname==="/"&&explicit==="hulksar")return;if(p?.defaultApp==="messculator"&&location.pathname==="/"&&!explicit)location.replace("/messculator")}; try{go(JSON.parse(localStorage.getItem(key)||"null"))}catch{} fetch("/api/app-preferences",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.preferences){localStorage.setItem(key,JSON.stringify(d.preferences));go(d.preferences)}}).catch(()=>{}); })();
 </script>
   <div class="app-shell" id="top">
     <header class="topbar">
@@ -28,7 +28,7 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
           <a class="nav-link" href="#diary">Nutrition</a>
           <a class="nav-link" href="#tasks">Daily Tasks</a>
           <a class="nav-link" href="#progress-analytics">Progress</a>
-          <a class="nav-link" href="/messculator">messCulator</a>
+          <a class="nav-link nav-messculator" href="/messculator">messCulator</a>
           <a class="nav-link" href="/apps">Customize apps</a>
         </nav>
 
@@ -559,3 +559,7 @@ import ProgressAnalytics from "../components/ProgressAnalytics.astro";
 
 </Layout>
 
+
+<style is:global>
+.top-nav .nav-messculator{font-weight:850;color:var(--text-primary,#f4edf0);background:color-mix(in srgb,#d77b8b 16%,transparent);border:1px solid color-mix(in srgb,#d77b8b 42%,transparent);border-radius:10px;padding:9px 13px;letter-spacing:.01em}.top-nav .nav-messculator:hover{color:var(--text-primary,#fff);background:color-mix(in srgb,#d77b8b 25%,transparent)}
+</style>
