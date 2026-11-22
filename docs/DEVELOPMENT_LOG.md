@@ -184,3 +184,10 @@ Append-only record of meaningful implementation and operational changes.
 - Verification: source-level inspection completed for client/API contracts, monthly budget migration, optional lender validation, edit handlers and explicit app-switch routing. Automated `npm run check`, `npm run build`, automated tests, CI, authenticated multi-month persistence, and real-device navigation tests have not yet been run in this GitHub-connected session.
 - Commit/deployment: implementation and documentation were pushed as sequential commits directly to `main`; this log entry is being appended now. Vercel deployment status for the latest SHA is not yet verified.
 - Remaining risks: monthly people lists remain shared across months; expense amount edits redistribute the updated total evenly across the saved recipients rather than preserving custom allocation ratios. Historical month editing and cross-device behavior still need authenticated browser testing.
+
+
+### Verification update — 2026-11-22
+- Vercel production deployment for implementation commit `79069bd237d5460615079665777c9e19798e4265` reached `READY`; GitHub's Vercel commit status is `success`. Deployment: https://projecthulksar-iuh7vcexa-kukki.vercel.app. Production aliases include https://projecthulksar.vercel.app.
+- Vercel's production build is the build verification for that exact implementation SHA. A separate local `npm run check`, `npm run build`, and automated test run were not performed in this session.
+- Authenticated month-to-month read/write, historical editing, lender persistence, and interactive switching still require a signed-in browser/device smoke test; build readiness alone does not prove those live data flows.
+- A documentation-only verification note is being committed after the successful implementation deployment; recheck the deployment for the final documentation SHA before reporting the final release state.
