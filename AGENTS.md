@@ -27,6 +27,9 @@ Priorities: (1) protect user data and account boundaries, (2) preserve existing 
 - Every user-owned record includes `userId`; derive it only from `authenticateRequest` and scope every query/mutation to that verified ID.
 - messCulator collection contract: `messculator_budgets`, `messculator_people`, `messculator_expenses`, `messculator_expense_splits`, and `messculator_borrowings`. Create indexes on first authenticated API access. Its full snapshot writes must run in a MongoDB transaction; do not run parallel operations inside a transaction.
 - messCulator stores money as integer paise, keeps borrowed funds separate from original budget, validates custom allocations to equal the expense total, and retains historical split names after a person is removed.
+- Monthly workspaces are keyed by `YYYY-MM`; each month has an independent starting budget in `monthlyBudgets`, while expenses and borrowing records are filtered by their `createdAt` month. Selecting a past month must load its existing records and allow editing/removal without moving or clearing other months.
+- Borrowing records may include an optional `lender` string (maximum 80 characters). Blank lender names are valid; preserve legacy records without the field.
+- Keep `budgetPaise` as a backward-compatible current-workspace snapshot while persisting the full `monthlyBudgets` map in the same user-scoped budget document. Do not create a new collection or overwrite other months when saving one month.
 
 ## Data ownership and security (non-negotiable)
 - Use the shared MongoDB Atlas database (default name `hulksar`) for current application and account data. Do not create a separate database per mini-app or introduce new Supabase Postgres application writes.
