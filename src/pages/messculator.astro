@@ -187,7 +187,6 @@ html[data-theme="light"]{--mc-bg:#f6f2f3;--mc-panel:#fff;--mc-border:#e7dfe2;--m
       allBorrowings.forEach((item,index)=>lines.push("", "Borrowing "+(index+1), "  ID: "+cleanText(item.id), "  Calculation period: "+cleanText(state.periods.find(period=>period.id===item.periodId)?.name||state.periods.find(period=>period.id===item.periodId)?.id||("legacy-"+monthKey(item.createdAt))||"Unknown"), "  Date/time (ISO 8601): "+cleanText(item.createdAt), "  Amount: "+moneyWithPaise(item.amount), "  Borrowed from: "+(cleanText(item.lender)||"Not specified")));
     } else lines.push("No dated borrowing records are saved.");
     lines.push("", "LEGACY BORROWED MONEY", "---------------------", "Amount: "+moneyWithPaise(state.legacyBorrowed), "Explanation: This is an older aggregate borrowing amount. Its original transaction dates and lender details were not available, so it is intentionally not assigned to any calculation period.", "", "END OF EXPORT", "==============");
-    state.periods.forEach(period=>lines.push("Period "+cleanText(period.id)+" | Name: "+(cleanText(period.name)||"Not named")+" | Dates: "+period.startDate+" to "+(period.endDate||"Open-ended")+" | Budget: "+moneyWithPaise(period.budget)));
     const content=lines.join("\n")+"\n";
     const blob=new Blob(["\uFEFF",content],{type:"text/plain;charset=utf-8"});
     const url=URL.createObjectURL(blob);
