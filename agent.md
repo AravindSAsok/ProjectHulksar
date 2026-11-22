@@ -260,3 +260,10 @@ Accuracy is more important than a green-looking report. Never claim a feature, t
 ## Task deletion reliability
 
 Task deletion is a soft archive. If a DELETE request fails or its response is lost, the client must re-fetch the selected month from the authenticated API before rolling back its optimistic UI state. A task confirmed archived by the server must not reappear in the checklist. Preserve prior-date check-ins and keep the canonical workflow in root `AGENTS.md` authoritative.
+
+
+## messCulator user-defined calculation cycles
+
+- Do not assume a new budget starts on the first day of a calendar month. Users create calculation periods manually with a start date, optional end date and optional name.
+- Keep each period's budget independent and tag expense/borrowing records with `periodId`. Preserve old monthly data by migrating it into legacy periods; never discard historical amounts or transaction timestamps.
+- Validate period metadata in `/api/messculator`; preserve authenticated per-user storage and update README, AGENTS and the development log for future changes.
